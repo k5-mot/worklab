@@ -14,5 +14,5 @@
   public host port 一覧
 - [doc/design/platform-architecture.md](/workspaces/worklab/doc/design/platform-architecture.md)
   設計判断
-- [doc/rules/document.md](/workspaces/worklab/doc/rules/document.md)
+- [doc/rules/document-style.md](/workspaces/worklab/doc/rules/document-style.md)
   ドキュメント運用ルール

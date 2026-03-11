@@ -12,7 +12,7 @@
 2. [spec/services.md](/workspaces/worklab/doc/spec/services.md)
 3. [spec/ports.md](/workspaces/worklab/doc/spec/ports.md)
 4. [design/platform-architecture.md](/workspaces/worklab/doc/design/platform-architecture.md)
-5. [rules/document.md](/workspaces/worklab/doc/rules/document.md)
+5. [rules/document-style.md](/workspaces/worklab/doc/rules/document-style.md)
 
 ## Current Architecture Snapshot
 

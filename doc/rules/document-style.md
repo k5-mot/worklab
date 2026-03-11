@@ -22,7 +22,7 @@ doc/
 │   └── ...
 │
 ├── rules/             ... 開発プロセス・規約
-│   ├── document-style-guide.md
+│   ├── document-style.md
 │   ├── git-workflow.md
 │   ├── review-policy.md
 │   └── ...
