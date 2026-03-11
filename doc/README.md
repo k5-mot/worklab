@@ -12,7 +12,8 @@
 2. [spec/services.md](/workspaces/worklab/doc/spec/services.md)
 3. [spec/ports.md](/workspaces/worklab/doc/spec/ports.md)
 4. [design/platform-architecture.md](/workspaces/worklab/doc/design/platform-architecture.md)
-5. [rules/document-style.md](/workspaces/worklab/doc/rules/document-style.md)
+5. [design/prj-object-storage.md](/workspaces/worklab/doc/design/prj-object-storage.md)
+6. [rules/document-style.md](/workspaces/worklab/doc/rules/document-style.md)
 
 ## Current Architecture Snapshot
 
@@ -20,7 +21,7 @@
 worklab
 ├── base: Keycloak, OpenBao
 ├── dev: GitLab EE, GitLab Runner, Kroki, Harbor, SonarQube, Dependency-Track
-├── obs: Uptime Kuma, Portainer, Grafana, Prometheus, node-exporter, cAdvisor, Alertmanager, Loki, Tempo
-├── prj: Backstage, Outline, Plane, Ghost
+├── ops: Uptime Kuma, Portainer, Grafana, Prometheus, node-exporter, cAdvisor, Alertmanager, Loki, Tempo
+├── prj: Backstage, Outline, Plane, Ghost, SeaweedFS
 └── llm: Open WebUI, Ollama, Qdrant, PaddleOCR, SearXNG, Whisper, Kokoro-TTS, ComfyUI, Langfuse, n8n, Dify
 ```

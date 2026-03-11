@@ -43,7 +43,7 @@
 | SonarQube | code quality | public | host port `30012` |
 | Dependency-Track | SBOM and dependency risk | public | host port `30013` |
 
-#### obs
+#### ops
 
 | Service | Role | Exposure | Notes |
 | --- | --- | --- | --- |
@@ -62,9 +62,24 @@
 | Service | Role | Exposure | Notes |
 | --- | --- | --- | --- |
 | Backstage | developer portal | public | host port `30030` |
-| Outline | knowledge base | public | host port `30031` |
-| Plane | project management | public | host port `30032` |
+| Outline | knowledge base | public | host port `30031`, uses `SeaweedFS` as S3-compatible storage |
+| Outline PostgreSQL | Outline relational database | internal | service-local dependency |
+| Outline Redis | Outline cache backend | internal | service-local dependency |
+| Plane | project management | public | host port `30032`, proxy entrypoint for Plane UI and API |
+| Plane Web | Plane frontend UI | internal | Plane companion |
+| Plane Space | Plane space UI | internal | Plane companion |
+| Plane Admin | Plane admin UI | internal | Plane companion |
+| Plane Live | Plane realtime server | internal | Plane companion |
+| Plane API | Plane backend API | internal | Plane companion |
+| Plane Worker | Plane async worker | internal | Plane companion |
+| Plane Beat Worker | Plane scheduled worker | internal | Plane companion |
+| Plane Migrator | Plane database migrator | internal | Plane companion |
+| Plane PostgreSQL | Plane relational database | internal | service-local dependency |
+| Plane Valkey | Plane cache backend | internal | service-local dependency |
+| Plane RabbitMQ | Plane message broker | internal | service-local dependency |
 | Ghost | publishing and documentation | public | host port `30033` |
+| SeaweedFS | S3-compatible object storage | public | host port `30034`, `Plane` and `Outline` storage endpoint |
+| SeaweedFS Init | SeaweedFS bucket bootstrap job | internal | creates `Plane` and `Outline` upload buckets |
 
 #### llm
 
@@ -72,17 +87,17 @@
 | --- | --- | --- | --- |
 | Open WebUI | LLM UI | public | host port `30040` |
 | Ollama | model runtime API | public | host port `30041` |
-| Redis | Ollama dependency | internal | service-local dependency |
-| PostgreSQL | Ollama dependency | internal | service-local dependency |
-| Qdrant | vector store | internal or undecided | public exposure 未確定 |
-| PaddleOCR | OCR | internal or undecided | public exposure 未確定 |
-| SearXNG | search meta engine | internal or undecided | public exposure 未確定 |
-| Whisper | speech-to-text | internal or undecided | public exposure 未確定 |
-| Kokoro-TTS | text-to-speech | internal or undecided | public exposure 未確定 |
+| Ollama Redis | Ollama dependency | internal | service-local dependency |
+| Ollama PostgreSQL | Ollama dependency | internal | service-local dependency |
+| Qdrant | vector store | internal | no public host port |
+| PaddleOCR | OCR | internal | no public host port |
+| SearXNG | search meta engine | internal | no public host port |
+| Whisper | speech-to-text | internal | no public host port |
+| Kokoro-TTS | text-to-speech | internal | no public host port |
 | ComfyUI | image generation UI | public | host port `30042` |
 | Langfuse | LLM observability | public | host port `30043` |
-| Redis | Langfuse dependency | internal | service-local dependency |
-| PostgreSQL | Langfuse dependency | internal | service-local dependency |
+| Langfuse Redis | Langfuse dependency | internal | service-local dependency |
+| Langfuse PostgreSQL | Langfuse dependency | internal | service-local dependency |
 | n8n | workflow automation | public | host port `30044` |
 | Dify | LLM application platform | public | host port `30045` |
 
@@ -112,5 +127,5 @@
 
 ## Open Questions
 
-- `Qdrant`, `PaddleOCR`, `SearXNG`, `Whisper`, `Kokoro-TTS` の public exposure は未確定
-- `obs` stack の internal service を host 公開する必要が将来出るかは未確定
+- `ops` stack の internal service を host 公開する必要が将来出るかは未確定
+- `Dify` の object storage を `SeaweedFS` へ統一するかは未確定

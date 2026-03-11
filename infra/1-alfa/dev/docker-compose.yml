@@ -1,0 +1,136 @@
+services:
+  gitlab:
+    container_name: worklab-alfa-dev-gitlab
+    restart: always
+    image: gitlab/gitlab-ee:latest
+    hostname: gitlab.local
+    shm_size: 256m
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost:30010'
+        letsencrypt['enable'] = false
+        nginx['listen_port'] = 80
+    ports:
+      - "30010:80"
+    volumes:
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
+    networks:
+      - dev-public
+      - dev-internal
+
+  gitlab-runner:
+    container_name: worklab-alfa-dev-gitlab-runner
+    restart: always
+    image: gitlab/gitlab-runner:latest
+    depends_on:
+      - gitlab
+    volumes:
+      - gitlab-runner-config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - dev-internal
+
+  kroki:
+    container_name: worklab-alfa-dev-kroki
+    restart: always
+    image: yuzutech/kroki:latest
+    depends_on:
+      - kroki-mermaid
+      - kroki-bpmn
+      - kroki-excalidraw
+      - kroki-diagramsnet
+    environment:
+      KROKI_MERMAID_HOST: kroki-mermaid
+      KROKI_MERMAID_PORT: 8002
+      KROKI_BPMN_HOST: kroki-bpmn
+      KROKI_BPMN_PORT: 8003
+      KROKI_EXCALIDRAW_HOST: kroki-excalidraw
+      KROKI_EXCALIDRAW_PORT: 8004
+      KROKI_DIAGRAMSNET_HOST: kroki-diagramsnet
+      KROKI_DIAGRAMSNET_PORT: 8005
+    networks:
+      - dev-internal
+
+  kroki-mermaid:
+    container_name: worklab-alfa-dev-kroki-mermaid
+    restart: always
+    image: yuzutech/kroki-mermaid:latest
+    networks:
+      - dev-internal
+
+  kroki-bpmn:
+    container_name: worklab-alfa-dev-kroki-bpmn
+    restart: always
+    image: yuzutech/kroki-bpmn:latest
+    networks:
+      - dev-internal
+
+  kroki-excalidraw:
+    container_name: worklab-alfa-dev-kroki-excalidraw
+    restart: always
+    image: yuzutech/kroki-excalidraw:latest
+    networks:
+      - dev-internal
+
+  kroki-diagramsnet:
+    container_name: worklab-alfa-dev-kroki-diagramsnet
+    restart: always
+    image: yuzutech/kroki-diagramsnet:latest
+    networks:
+      - dev-internal
+
+  harbor:
+    container_name: worklab-alfa-dev-harbor
+    restart: always
+    image: goharbor/harbor-core:v2.12.2
+    environment:
+      CORE_SECRET: ${HARBOR_CORE_SECRET:-change-me}
+      HARBOR_ADMIN_PASSWORD: ${HARBOR_ADMIN_PASSWORD:-Harbor12345}
+    ports:
+      - "30011:8080"
+    volumes:
+      - harbor-data:/data
+    networks:
+      - dev-public
+      - dev-internal
+
+  sonarqube:
+    container_name: worklab-alfa-dev-sonarqube
+    restart: always
+    image: sonarqube:lts-community
+    ports:
+      - "30012:9000"
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
+    networks:
+      - dev-public
+
+  dependency-track:
+    container_name: worklab-alfa-dev-dependency-track
+    restart: always
+    image: dependencytrack/bundled:latest
+    ports:
+      - "30013:8080"
+    volumes:
+      - dependency-track-data:/data
+    networks:
+      - dev-public
+
+volumes:
+  gitlab-config:
+  gitlab-logs:
+  gitlab-data:
+  gitlab-runner-config:
+  harbor-data:
+  sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:
+  dependency-track-data:
+
+networks:
+  dev-public:
+  dev-internal:

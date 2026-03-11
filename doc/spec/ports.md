@@ -29,14 +29,15 @@
 | dev | Harbor | 30011 |
 | dev | SonarQube | 30012 |
 | dev | Dependency-Track | 30013 |
-| obs | Uptime Kuma | 30020 |
-| obs | Portainer | 30021 |
-| obs | Grafana | 30022 |
-| obs | Prometheus | 30023 |
+| ops | Uptime Kuma | 30020 |
+| ops | Portainer | 30021 |
+| ops | Grafana | 30022 |
+| ops | Prometheus | 30023 |
 | prj | Backstage | 30030 |
 | prj | Outline | 30031 |
 | prj | Plane | 30032 |
 | prj | Ghost | 30033 |
+| prj | SeaweedFS | 30034 |
 | llm | Open WebUI | 30040 |
 | llm | Ollama | 30041 |
 | llm | ComfyUI | 30042 |
@@ -71,4 +72,5 @@
 ## Open Questions
 
 - `SearXNG` の public host port を固定するかは未確定
-- `obs` stack の internal service に外部 UI を設けるかは未確定
+- `ops` stack の internal service に外部 UI を設けるかは未確定
+- `SeaweedFS` を `prj` 以外の stack でも共通利用するかは未確定

@@ -16,7 +16,7 @@
   - [spec/services.md](/workspaces/worklab/doc/spec/services.md)
   - [design/platform-architecture.md](/workspaces/worklab/doc/design/platform-architecture.md)
 - 注意事項：
-  - `base`, `dev`, `obs`, `prj`, `llm` の 5 種を使う
+  - `base`, `dev`, `ops`, `prj`, `llm` の 5 種を使う
 
 ## Public Host Port
 
@@ -58,4 +58,4 @@
 - 使用箇所：
   - [spec/services.md](/workspaces/worklab/doc/spec/services.md)
 - 注意事項：
-  - `Ollama` と `Langfuse` の `Redis` / `PostgreSQL` を含む
+  - `ollama-redis`, `ollama-postgres`, `langfuse-redis`, `langfuse-postgres` を含む

@@ -1,0 +1,190 @@
+services:
+  open-webui:
+    container_name: worklab-alfa-llm-open-webui
+    restart: always
+    image: ghcr.io/open-webui/open-webui:main
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+    ports:
+      - "30040:8080"
+    volumes:
+      - open-webui-data:/app/backend/data
+    networks:
+      - llm-public
+      - llm-internal
+
+  ollama:
+    container_name: worklab-alfa-llm-ollama
+    restart: always
+    image: ollama/ollama:latest
+    depends_on:
+      - ollama-redis
+      - ollama-postgres
+    ports:
+      - "30041:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - llm-public
+      - llm-internal
+
+  ollama-redis:
+    container_name: worklab-alfa-llm-ollama-redis
+    restart: always
+    image: redis:7-alpine
+    volumes:
+      - ollama-redis-data:/data
+    networks:
+      - llm-internal
+
+  ollama-postgres:
+    container_name: worklab-alfa-llm-ollama-postgres
+    restart: always
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ollama
+      POSTGRES_USER: ollama
+      POSTGRES_PASSWORD: ${OLLAMA_POSTGRES_PASSWORD:-ollama}
+    volumes:
+      - ollama-postgres-data:/var/lib/postgresql/data
+    networks:
+      - llm-internal
+
+  qdrant:
+    container_name: worklab-alfa-llm-qdrant
+    restart: always
+    image: qdrant/qdrant:latest
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - llm-internal
+
+  paddleocr:
+    container_name: worklab-alfa-llm-paddleocr
+    restart: always
+    build:
+      context: ./paddleocr
+      dockerfile: Dockerfile
+    networks:
+      - llm-internal
+
+  searxng:
+    container_name: worklab-alfa-llm-searxng
+    restart: always
+    image: searxng/searxng:latest
+    networks:
+      - llm-internal
+
+  whisper:
+    container_name: worklab-alfa-llm-whisper
+    restart: always
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    environment:
+      ASR_MODEL: ${WHISPER_MODEL:-base}
+    networks:
+      - llm-internal
+
+  kokoro-tts:
+    container_name: worklab-alfa-llm-kokoro-tts
+    restart: always
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
+    networks:
+      - llm-internal
+
+  comfyui:
+    container_name: worklab-alfa-llm-comfyui
+    restart: always
+    build:
+      context: ./comfyui
+      dockerfile: Dockerfile
+    ports:
+      - "30042:8188"
+    volumes:
+      - comfyui-data:/app/ComfyUI/output
+    networks:
+      - llm-public
+      - llm-internal
+
+  langfuse:
+    container_name: worklab-alfa-llm-langfuse
+    restart: always
+    image: langfuse/langfuse:latest
+    depends_on:
+      - langfuse-redis
+      - langfuse-postgres
+    environment:
+      DATABASE_URL: postgresql://langfuse:${LANGFUSE_POSTGRES_PASSWORD:-langfuse}@langfuse-postgres:5432/langfuse
+      REDIS_HOST: langfuse-redis
+      REDIS_PORT: 6379
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:-change-me}
+      SALT: ${LANGFUSE_SALT:-change-me}
+      NEXTAUTH_URL: http://localhost:30043
+    ports:
+      - "30043:3000"
+    networks:
+      - llm-public
+      - llm-internal
+
+  langfuse-redis:
+    container_name: worklab-alfa-llm-langfuse-redis
+    restart: always
+    image: redis:7-alpine
+    volumes:
+      - langfuse-redis-data:/data
+    networks:
+      - llm-internal
+
+  langfuse-postgres:
+    container_name: worklab-alfa-llm-langfuse-postgres
+    restart: always
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: langfuse
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_POSTGRES_PASSWORD:-langfuse}
+    volumes:
+      - langfuse-postgres-data:/var/lib/postgresql/data
+    networks:
+      - llm-internal
+
+  n8n:
+    container_name: worklab-alfa-llm-n8n
+    restart: always
+    image: n8nio/n8n:latest
+    ports:
+      - "30044:5678"
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks:
+      - llm-public
+      - llm-internal
+
+  dify:
+    container_name: worklab-alfa-llm-dify
+    restart: always
+    image: langgenius/dify-web:latest
+    environment:
+      CONSOLE_API_URL: http://localhost:30045
+      APP_API_URL: http://localhost:30045
+    ports:
+      - "30045:3000"
+    networks:
+      - llm-public
+      - llm-internal
+
+volumes:
+  open-webui-data:
+  ollama-data:
+  ollama-redis-data:
+  ollama-postgres-data:
+  qdrant-data:
+  comfyui-data:
+  langfuse-redis-data:
+  langfuse-postgres-data:
+  n8n-data:
+
+networks:
+  llm-public:
+  llm-internal:

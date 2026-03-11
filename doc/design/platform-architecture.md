@@ -4,7 +4,7 @@
 
 - `worklab` は on-premise の開発者向けサービス群を運用するためのリポジトリ
 - 早期ドラフトには Kubernetes 前提の拡張構想や、より広いサービス候補が含まれていた
-- 現在は `base`, `dev`, `obs`, `prj`, `llm` の 5 stack 構成へ収束している
+- 現在は `base`, `dev`, `ops`, `prj`, `llm` の 5 stack 構成へ収束している
 
 ## Goals / Non-goals
 
@@ -29,7 +29,7 @@
   - Harbor
   - SonarQube
   - Dependency-Track
-- `obs` に監視系を集約する
+- `ops` に監視系を集約する
 - `prj` に日常的な project tool を集約する
 - `llm` に生成 AI 関連サービスを集約する
 - public service だけに固定 host port を割り当てる
@@ -61,7 +61,7 @@
 
 ## Decision
 
-- `base`, `dev`, `obs`, `prj`, `llm` の 5 stack を採用する
+- `base`, `dev`, `ops`, `prj`, `llm` の 5 stack を採用する
 - public host port は `doc/spec/ports.md` で固定する
 - service inventory は `doc/spec/services.md` で固定する
 - ドラフト文書は整備後に残さず、必要な内容だけを現行文書へ吸収する
