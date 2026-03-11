@@ -58,4 +58,4 @@
 - 使用箇所：
   - [spec/services.md](/workspaces/worklab/doc/spec/services.md)
 - 注意事項：
-  - `ollama-redis`, `ollama-postgres`, `langfuse-redis`, `langfuse-postgres` を含む
+  - `ollama-redis`, `ollama-postgres`, `langfuse-clickhouse`, `langfuse-minio`, `langfuse-redis`, `langfuse-postgres`, `dify-db-postgres`, `dify-redis`, `dify-weaviate` を含む

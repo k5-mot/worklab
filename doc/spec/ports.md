@@ -44,6 +44,7 @@
 | llm | Langfuse | 30043 |
 | llm | n8n | 30044 |
 | llm | Dify | 30045 |
+| llm | Langfuse MinIO | 30046 |
 
 ### Non-functional Requirements
 

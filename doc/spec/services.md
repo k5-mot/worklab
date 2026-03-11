@@ -40,6 +40,16 @@
 | kroki-excalidraw | Kroki companion | internal | Excalidraw renderer |
 | kroki-diagramsnet | Kroki companion | internal | diagrams.net renderer |
 | Harbor | container registry | public | host port `30011` |
+| Harbor Prepare | Harbor config generation job | internal | one-shot job for official Harbor config and secrets |
+| Harbor Log | Harbor log collector | internal | syslog endpoint for Harbor components |
+| Harbor Registry | Harbor image registry | internal | official Harbor registry service |
+| Harbor Registryctl | Harbor registry control plane | internal | official Harbor companion |
+| Harbor PostgreSQL | Harbor relational database | internal | service-local dependency |
+| Harbor Core | Harbor backend API | internal | official Harbor companion |
+| Harbor Portal | Harbor UI container | internal | official Harbor companion |
+| Harbor Jobservice | Harbor async worker | internal | official Harbor companion |
+| Harbor Redis | Harbor cache backend | internal | service-local dependency |
+| Harbor Trivy Adapter | Harbor vulnerability scanner | internal | official Harbor companion |
 | SonarQube | code quality | public | host port `30012` |
 | Dependency-Track | SBOM and dependency risk | public | host port `30013` |
 
@@ -96,10 +106,24 @@
 | Kokoro-TTS | text-to-speech | internal | no public host port |
 | ComfyUI | image generation UI | public | host port `30042` |
 | Langfuse | LLM observability | public | host port `30043` |
+| Langfuse Worker | Langfuse async worker | internal | official Langfuse companion |
+| Langfuse ClickHouse | Langfuse analytics store | internal | service-local dependency |
+| Langfuse MinIO | Langfuse object storage | public | host port `30046`, S3 endpoint for Langfuse uploads |
 | Langfuse Redis | Langfuse dependency | internal | service-local dependency |
 | Langfuse PostgreSQL | Langfuse dependency | internal | service-local dependency |
 | n8n | workflow automation | public | host port `30044` |
 | Dify | LLM application platform | public | host port `30045` |
+| Dify Init Permissions | Dify storage bootstrap job | internal | one-shot job for app storage permissions |
+| Dify API | Dify backend API | internal | official Dify companion |
+| Dify Worker | Dify async worker | internal | official Dify companion |
+| Dify Worker Beat | Dify scheduler | internal | official Dify companion |
+| Dify Web | Dify frontend UI | internal | official Dify companion |
+| Dify PostgreSQL | Dify relational database | internal | service-local dependency |
+| Dify Redis | Dify cache backend | internal | service-local dependency |
+| Dify Sandbox | Dify code execution sandbox | internal | official Dify companion |
+| Dify Plugin Daemon | Dify plugin runtime | internal | official Dify companion |
+| Dify SSRF Proxy | Dify outbound proxy | internal | official Dify companion |
+| Dify Weaviate | Dify vector store | internal | official Dify default vector backend |
 
 ### Non-functional Requirements
 
@@ -129,3 +153,4 @@
 
 - `ops` stack の internal service を host 公開する必要が将来出るかは未確定
 - `Dify` の object storage を `SeaweedFS` へ統一するかは未確定
+- `Harbor` の generated config を repository 管理へ寄せるか、runtime generation のままにするかは未確定

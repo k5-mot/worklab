@@ -8,15 +8,15 @@
 ├── README.md        ... ランディングページ
 │
 ├── base/            ... 基盤サービス
-│   └── docker-compose.yaml
+│   └── docker-compose.yml
 ├── dev/             ... 開発支援サービス
-│   └── docker-compose.yaml
+│   └── docker-compose.yml
 ├── ops/             ... 運用支援サービス
-│   └── docker-compose.yaml
+│   └── docker-compose.yml
 ├── prj/             ... プロジェクト支援サービス
-│   └── docker-compose.yaml
+│   └── docker-compose.yml
 └── llm/             ... LLM関連サービス
-    └── docker-compose.yaml
+    └── docker-compose.yml
 ```
 
 - サービス名の下位 bullet は、self-host 構成で追加になりやすい companion / dependency container を表す
@@ -37,6 +37,16 @@
   - kroki-excalidraw
   - kroki-diagramsnet
 - Harbor: `30011`
+  - harbor-prepare
+  - harbor-log
+  - harbor-registry
+  - harbor-registryctl
+  - harbor-postgresql
+  - harbor-core
+  - harbor-portal
+  - harbor-jobservice
+  - harbor-redis
+  - harbor-trivy-adapter
 - SonarQube: `30012`
 - Dependency-Track: `30013`
 
@@ -91,7 +101,21 @@
 - Kokoro-TTS
 - ComfyUI: `30042`
 - Langfuse: `30043`
+  - langfuse-worker
+  - langfuse-clickhouse
+  - langfuse-minio: `30046`
   - langfuse-redis
   - langfuse-postgres
 - n8n: `30044`
 - Dify: `30045`
+  - dify-init-permissions
+  - dify-api
+  - dify-worker
+  - dify-worker-beat
+  - dify-web
+  - dify-db-postgres
+  - dify-redis
+  - dify-sandbox
+  - dify-plugin-daemon
+  - dify-ssrf-proxy
+  - dify-weaviate
