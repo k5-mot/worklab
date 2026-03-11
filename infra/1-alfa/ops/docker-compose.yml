@@ -1,0 +1,136 @@
+services:
+  uptime-kuma:
+    container_name: worklab-alfa-ops-uptime-kuma
+    restart: always
+    image: louislam/uptime-kuma:1
+    ports:
+      - "30020:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    networks:
+      - ops-public
+
+  portainer:
+    container_name: worklab-alfa-ops-portainer
+    restart: always
+    image: portainer/portainer-ce:latest
+    command: -H unix:///var/run/docker.sock
+    ports:
+      - "30021:9000"
+    volumes:
+      - portainer-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ops-public
+
+  grafana:
+    container_name: worklab-alfa-ops-grafana
+    restart: always
+    image: grafana/grafana-oss:latest
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    ports:
+      - "30022:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./grafana/default.yaml:/etc/grafana/provisioning/dashboards/default.yaml:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - ops-public
+      - ops-internal
+
+  prometheus:
+    container_name: worklab-alfa-ops-prometheus
+    restart: always
+    image: prom/prometheus:latest
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    depends_on:
+      - node-exporter
+      - cadvisor
+      - alertmanager
+    ports:
+      - "30023:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - ops-public
+      - ops-internal
+
+  node-exporter:
+    container_name: worklab-alfa-ops-node-exporter
+    restart: always
+    image: prom/node-exporter:latest
+    command:
+      - --path.rootfs=/host
+    volumes:
+      - /:/host:ro
+    networks:
+      - ops-internal
+
+  cadvisor:
+    container_name: worklab-alfa-ops-cadvisor
+    restart: always
+    image: gcr.io/cadvisor/cadvisor:latest
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    networks:
+      - ops-internal
+
+  alertmanager:
+    container_name: worklab-alfa-ops-alertmanager
+    restart: always
+    image: prom/alertmanager:latest
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    networks:
+      - ops-internal
+
+  loki:
+    container_name: worklab-alfa-ops-loki
+    restart: always
+    image: grafana/loki:latest
+    command: -config.file=/etc/loki/local-config.yml
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yml:ro
+      - loki-data:/loki
+    networks:
+      - ops-internal
+
+  tempo:
+    container_name: worklab-alfa-ops-tempo
+    restart: always
+    image: grafana/tempo:latest
+    user: "0"
+    command: -config.file=/etc/tempo/tempo.yml
+    volumes:
+      - ./tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo-data:/tmp/tempo
+    networks:
+      - ops-internal
+
+volumes:
+  uptime-kuma-data:
+  portainer-data:
+  grafana-data:
+  prometheus-data:
+  alertmanager-data:
+  loki-data:
+  tempo-data:
+
+networks:
+  ops-public:
+  ops-internal:

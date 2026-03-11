@@ -1,0 +1,404 @@
+x-plane-db-env: &plane-db-env
+  PGHOST: plane-postgresql
+  PGDATABASE: ${PLANE_POSTGRES_DB:-plane}
+  POSTGRES_USER: ${PLANE_POSTGRES_USER:-plane}
+  POSTGRES_PASSWORD: ${PLANE_POSTGRES_PASSWORD:-plane}
+  POSTGRES_DB: ${PLANE_POSTGRES_DB:-plane}
+  POSTGRES_PORT: ${PLANE_POSTGRES_PORT:-5432}
+  PGDATA: ${PLANE_POSTGRES_PGDATA:-/var/lib/postgresql/data}
+
+x-plane-redis-env: &plane-redis-env
+  REDIS_HOST: plane-valkey
+  REDIS_PORT: ${PLANE_VALKEY_PORT:-6379}
+  REDIS_URL: ${PLANE_REDIS_URL:-redis://plane-valkey:6379/}
+
+x-plane-s3-env: &plane-s3-env
+  AWS_REGION: ${PLANE_AWS_REGION:-us-east-1}
+  AWS_ACCESS_KEY_ID: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+  AWS_SECRET_ACCESS_KEY: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+  AWS_S3_ENDPOINT_URL: ${PLANE_AWS_S3_ENDPOINT_URL:-http://seaweedfs:30034}
+  AWS_S3_BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+  MINIO_ROOT_USER: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+  MINIO_ROOT_PASSWORD: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+
+x-plane-mq-env: &plane-mq-env
+  RABBITMQ_HOST: plane-rabbitmq
+  RABBITMQ_PORT: ${PLANE_RABBITMQ_PORT:-5672}
+  RABBITMQ_DEFAULT_USER: ${PLANE_RABBITMQ_USER:-plane}
+  RABBITMQ_DEFAULT_PASS: ${PLANE_RABBITMQ_PASSWORD:-plane}
+  RABBITMQ_DEFAULT_VHOST: ${PLANE_RABBITMQ_VHOST:-plane}
+  RABBITMQ_VHOST: ${PLANE_RABBITMQ_VHOST:-plane}
+
+x-plane-live-env: &plane-live-env
+  API_BASE_URL: ${PLANE_API_BASE_URL:-http://plane-api:8000}
+  LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:-change-me}
+
+x-plane-proxy-env: &plane-proxy-env
+  APP_DOMAIN: ${PLANE_APP_DOMAIN:-localhost:30032}
+  FILE_SIZE_LIMIT: ${PLANE_FILE_SIZE_LIMIT:-5242880}
+  CERT_EMAIL: ${PLANE_CERT_EMAIL:-}
+  CERT_ACME_CA: ${PLANE_CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+  CERT_ACME_DNS: ${PLANE_CERT_ACME_DNS:-}
+  LISTEN_HTTP_PORT: 80
+  LISTEN_HTTPS_PORT: 443
+  BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+  SITE_ADDRESS: ${PLANE_SITE_ADDRESS:-:80}
+
+x-plane-app-env: &plane-app-env
+  WEB_URL: ${PLANE_WEB_URL:-http://localhost:30032}
+  DEBUG: ${PLANE_DEBUG:-0}
+  CORS_ALLOWED_ORIGINS: ${PLANE_CORS_ALLOWED_ORIGINS:-http://localhost:30032}
+  GUNICORN_WORKERS: ${PLANE_GUNICORN_WORKERS:-1}
+  USE_MINIO: ${PLANE_USE_MINIO:-0}
+  DATABASE_URL: ${PLANE_DATABASE_URL:-postgresql://plane:plane@plane-postgresql/plane}
+  SECRET_KEY: ${PLANE_SECRET_KEY:-change-me}
+  AMQP_URL: ${PLANE_AMQP_URL:-amqp://plane:plane@plane-rabbitmq:5672/plane}
+  API_KEY_RATE_LIMIT: ${PLANE_API_KEY_RATE_LIMIT:-60/minute}
+  MINIO_ENDPOINT_SSL: ${PLANE_MINIO_ENDPOINT_SSL:-0}
+  LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:-change-me}
+
+services:
+  backstage:
+    container_name: worklab-alfa-prj-backstage
+    restart: always
+    image: ghcr.io/backstage/backstage:latest
+    environment:
+      APP_CONFIG_app_baseUrl: http://localhost:30030
+      APP_CONFIG_backend_baseUrl: http://localhost:30030
+    ports:
+      - "30030:7007"
+    networks:
+      - prj-public
+
+  outline:
+    container_name: worklab-alfa-prj-outline
+    restart: always
+    image: outlinewiki/outline:latest
+    environment:
+      URL: http://localhost:30031
+      PORT: 3000
+      SECRET_KEY: ${OUTLINE_SECRET_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+      UTILS_SECRET: ${OUTLINE_UTILS_SECRET:-abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789}
+      DATABASE_URL: ${OUTLINE_DATABASE_URL:-postgres://outline:outline@outline-postgresql:5432/outline}
+      REDIS_URL: ${OUTLINE_REDIS_URL:-redis://outline-redis:6379}
+      PGSSLMODE: disable
+      FORCE_HTTPS: "false"
+      FILE_STORAGE: s3
+      AWS_ACCESS_KEY_ID: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+      AWS_SECRET_ACCESS_KEY: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+      AWS_REGION: ${OUTLINE_AWS_REGION:-us-east-1}
+      AWS_S3_UPLOAD_BUCKET_URL: ${OUTLINE_AWS_S3_UPLOAD_BUCKET_URL:-http://s3:30034}
+      AWS_S3_UPLOAD_BUCKET_NAME: ${OUTLINE_S3_BUCKET_NAME:-outline}
+      AWS_S3_FORCE_PATH_STYLE: "true"
+      AWS_S3_ACL: private
+    ports:
+      - "30031:3000"
+    depends_on:
+      outline-postgresql:
+        condition: service_started
+      outline-redis:
+        condition: service_started
+      seaweedfs-init:
+        condition: service_completed_successfully
+    volumes:
+      - outline-data:/var/lib/outline/data
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - prj-public
+      - prj-internal
+
+  outline-postgresql:
+    container_name: worklab-alfa-prj-outline-postgresql
+    restart: always
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${OUTLINE_POSTGRES_DB:-outline}
+      POSTGRES_USER: ${OUTLINE_POSTGRES_USER:-outline}
+      POSTGRES_PASSWORD: ${OUTLINE_POSTGRES_PASSWORD:-outline}
+    volumes:
+      - outline-postgresql-data:/var/lib/postgresql/data
+    networks:
+      - prj-internal
+
+  outline-redis:
+    container_name: worklab-alfa-prj-outline-redis
+    restart: always
+    image: redis:7-alpine
+    volumes:
+      - outline-redis-data:/data
+    networks:
+      - prj-internal
+
+  plane:
+    container_name: worklab-alfa-prj-plane
+    restart: always
+    image: artifacts.plane.so/makeplane/plane-proxy:${PLANE_APP_RELEASE:-v1.2.3}
+    environment:
+      <<: *plane-proxy-env
+    depends_on:
+      - plane-web
+      - plane-space
+      - plane-admin
+      - plane-live
+      - plane-api
+    ports:
+      - "30032:80"
+    volumes:
+      - plane-proxy-config:/config
+      - plane-proxy-data:/data
+    networks:
+      - prj-public
+      - prj-internal
+
+  plane-web:
+    container_name: worklab-alfa-prj-plane-web
+    restart: always
+    image: artifacts.plane.so/makeplane/plane-frontend:${PLANE_APP_RELEASE:-v1.2.3}
+    depends_on:
+      - plane-api
+      - plane-worker
+    networks:
+      prj-internal:
+        aliases:
+          - web
+
+  plane-space:
+    container_name: worklab-alfa-prj-plane-space
+    restart: always
+    image: artifacts.plane.so/makeplane/plane-space:${PLANE_APP_RELEASE:-v1.2.3}
+    depends_on:
+      - plane-api
+      - plane-worker
+      - plane-web
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/spaces/ >/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      prj-internal:
+        aliases:
+          - space
+
+  plane-admin:
+    container_name: worklab-alfa-prj-plane-admin
+    restart: always
+    image: artifacts.plane.so/makeplane/plane-admin:${PLANE_APP_RELEASE:-v1.2.3}
+    depends_on:
+      - plane-api
+      - plane-web
+    networks:
+      prj-internal:
+        aliases:
+          - admin
+
+  plane-live:
+    container_name: worklab-alfa-prj-plane-live
+    restart: always
+    image: artifacts.plane.so/makeplane/plane-live:${PLANE_APP_RELEASE:-v1.2.3}
+    environment:
+      <<: [*plane-live-env, *plane-redis-env]
+    depends_on:
+      - plane-api
+      - plane-web
+    networks:
+      prj-internal:
+        aliases:
+          - live
+
+  plane-api:
+    container_name: worklab-alfa-prj-plane-api
+    restart: always
+    image: artifacts.plane.so/makeplane/plane-backend:${PLANE_APP_RELEASE:-v1.2.3}
+    command: ./bin/docker-entrypoint-api.sh
+    environment:
+      <<: [*plane-app-env, *plane-db-env, *plane-redis-env, *plane-s3-env, *plane-proxy-env]
+    depends_on:
+      plane-postgresql:
+        condition: service_started
+      plane-valkey:
+        condition: service_started
+      plane-rabbitmq:
+        condition: service_started
+      seaweedfs-init:
+        condition: service_completed_successfully
+    volumes:
+      - plane-logs-api:/code/plane/logs
+    networks:
+      prj-internal:
+        aliases:
+          - api
+
+  plane-worker:
+    container_name: worklab-alfa-prj-plane-worker
+    restart: always
+    image: artifacts.plane.so/makeplane/plane-backend:${PLANE_APP_RELEASE:-v1.2.3}
+    command: ./bin/docker-entrypoint-worker.sh
+    environment:
+      <<: [*plane-app-env, *plane-db-env, *plane-redis-env, *plane-s3-env, *plane-proxy-env]
+    depends_on:
+      plane-api:
+        condition: service_started
+      plane-postgresql:
+        condition: service_started
+      plane-valkey:
+        condition: service_started
+      plane-rabbitmq:
+        condition: service_started
+      seaweedfs-init:
+        condition: service_completed_successfully
+    volumes:
+      - plane-logs-worker:/code/plane/logs
+    networks:
+      - prj-internal
+
+  plane-beat-worker:
+    container_name: worklab-alfa-prj-plane-beat-worker
+    restart: always
+    image: artifacts.plane.so/makeplane/plane-backend:${PLANE_APP_RELEASE:-v1.2.3}
+    command: ./bin/docker-entrypoint-beat.sh
+    environment:
+      <<: [*plane-app-env, *plane-db-env, *plane-redis-env, *plane-s3-env, *plane-proxy-env]
+    depends_on:
+      plane-api:
+        condition: service_started
+      plane-postgresql:
+        condition: service_started
+      plane-valkey:
+        condition: service_started
+      plane-rabbitmq:
+        condition: service_started
+      seaweedfs-init:
+        condition: service_completed_successfully
+    volumes:
+      - plane-logs-beat-worker:/code/plane/logs
+    networks:
+      - prj-internal
+
+  plane-migrator:
+    container_name: worklab-alfa-prj-plane-migrator
+    image: artifacts.plane.so/makeplane/plane-backend:${PLANE_APP_RELEASE:-v1.2.3}
+    command: ./bin/docker-entrypoint-migrator.sh
+    restart: on-failure
+    environment:
+      <<: [*plane-app-env, *plane-db-env, *plane-redis-env, *plane-s3-env, *plane-proxy-env]
+    depends_on:
+      plane-postgresql:
+        condition: service_started
+      plane-valkey:
+        condition: service_started
+      seaweedfs-init:
+        condition: service_completed_successfully
+    volumes:
+      - plane-logs-migrator:/code/plane/logs
+    networks:
+      - prj-internal
+
+  plane-postgresql:
+    container_name: worklab-alfa-prj-plane-postgresql
+    restart: always
+    image: postgres:15.7-alpine
+    command: postgres -c max_connections=1000
+    environment:
+      <<: *plane-db-env
+    volumes:
+      - plane-postgresql-data:/var/lib/postgresql/data
+    networks:
+      - prj-internal
+
+  plane-valkey:
+    container_name: worklab-alfa-prj-plane-valkey
+    restart: always
+    image: valkey/valkey:7.2.11-alpine
+    volumes:
+      - plane-valkey-data:/data
+    networks:
+      - prj-internal
+
+  plane-rabbitmq:
+    container_name: worklab-alfa-prj-plane-rabbitmq
+    restart: always
+    image: rabbitmq:3.13.6-management-alpine
+    environment:
+      <<: *plane-mq-env
+    volumes:
+      - plane-rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - prj-internal
+
+  ghost:
+    container_name: worklab-alfa-prj-ghost
+    restart: always
+    image: ghost:5-alpine
+    environment:
+      url: http://localhost:30033
+    ports:
+      - "30033:2368"
+    volumes:
+      - ghost-data:/var/lib/ghost/content
+    networks:
+      - prj-public
+
+  seaweedfs:
+    container_name: worklab-alfa-prj-seaweedfs
+    restart: always
+    image: chrislusf/seaweedfs:latest
+    entrypoint:
+      - /bin/sh
+      - /etc/seaweedfs/start.sh
+    ports:
+      - "30034:30034"
+    volumes:
+      - seaweedfs-data:/data
+      - ./seaweedfs/start.sh:/etc/seaweedfs/start.sh:ro
+    networks:
+      prj-public: {}
+      prj-internal:
+        aliases:
+          - s3
+
+  seaweedfs-init:
+    container_name: worklab-alfa-prj-seaweedfs-init
+    image: amazon/aws-cli:latest
+    entrypoint:
+      - /bin/sh
+      - -lc
+    command:
+      - |-
+        until aws --endpoint-url http://seaweedfs:30034 s3api list-buckets >/dev/null 2>&1; do sleep 2; done &&
+        for bucket in ${PLANE_S3_BUCKET_NAME:-uploads} ${OUTLINE_S3_BUCKET_NAME:-outline}; do
+          aws --endpoint-url http://seaweedfs:30034 s3api head-bucket --bucket "$$bucket" >/dev/null 2>&1 ||
+          aws --endpoint-url http://seaweedfs:30034 s3api create-bucket --bucket "$$bucket";
+        done
+    environment:
+      AWS_ACCESS_KEY_ID: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+      AWS_SECRET_ACCESS_KEY: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+      AWS_DEFAULT_REGION: ${PLANE_AWS_REGION:-us-east-1}
+    restart: "no"
+    depends_on:
+      seaweedfs:
+        condition: service_started
+    networks:
+      - prj-internal
+
+volumes:
+  outline-data:
+  outline-postgresql-data:
+  outline-redis-data:
+  ghost-data:
+  plane-proxy-config:
+  plane-proxy-data:
+  plane-logs-api:
+  plane-logs-worker:
+  plane-logs-beat-worker:
+  plane-logs-migrator:
+  plane-postgresql-data:
+  plane-valkey-data:
+  plane-rabbitmq-data:
+  seaweedfs-data:
+
+networks:
+  prj-public:
+  prj-internal:

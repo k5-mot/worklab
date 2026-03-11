@@ -1,0 +1,444 @@
+services:
+  gitlab:
+    container_name: worklab-alfa-dev-gitlab
+    restart: always
+    image: gitlab/gitlab-ee:latest
+    hostname: gitlab.local
+    shm_size: 256m
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost:30010'
+        letsencrypt['enable'] = false
+        nginx['listen_port'] = 80
+    ports:
+      - "30010:80"
+    volumes:
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
+    networks:
+      - dev-public
+      - dev-internal
+
+  gitlab-runner:
+    container_name: worklab-alfa-dev-gitlab-runner
+    restart: always
+    image: gitlab/gitlab-runner:latest
+    depends_on:
+      - gitlab
+    volumes:
+      - gitlab-runner-config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - dev-internal
+
+  kroki:
+    container_name: worklab-alfa-dev-kroki
+    restart: always
+    image: yuzutech/kroki:latest
+    depends_on:
+      - kroki-mermaid
+      - kroki-bpmn
+      - kroki-excalidraw
+      - kroki-diagramsnet
+    environment:
+      KROKI_MERMAID_HOST: kroki-mermaid
+      KROKI_MERMAID_PORT: 8002
+      KROKI_BPMN_HOST: kroki-bpmn
+      KROKI_BPMN_PORT: 8003
+      KROKI_EXCALIDRAW_HOST: kroki-excalidraw
+      KROKI_EXCALIDRAW_PORT: 8004
+      KROKI_DIAGRAMSNET_HOST: kroki-diagramsnet
+      KROKI_DIAGRAMSNET_PORT: 8005
+    networks:
+      - dev-internal
+
+  kroki-mermaid:
+    container_name: worklab-alfa-dev-kroki-mermaid
+    restart: always
+    image: yuzutech/kroki-mermaid:latest
+    networks:
+      - dev-internal
+
+  kroki-bpmn:
+    container_name: worklab-alfa-dev-kroki-bpmn
+    restart: always
+    image: yuzutech/kroki-bpmn:latest
+    networks:
+      - dev-internal
+
+  kroki-excalidraw:
+    container_name: worklab-alfa-dev-kroki-excalidraw
+    restart: always
+    image: yuzutech/kroki-excalidraw:latest
+    networks:
+      - dev-internal
+
+  kroki-diagramsnet:
+    container_name: worklab-alfa-dev-kroki-diagramsnet
+    restart: always
+    image: yuzutech/kroki-diagramsnet:latest
+    networks:
+      - dev-internal
+
+  harbor-prepare:
+    container_name: worklab-alfa-dev-harbor-prepare
+    restart: "no"
+    image: goharbor/prepare:v2.12.2
+    command:
+      - prepare
+      - --with-trivy
+    privileged: true
+    volumes:
+      - ./harbor/input:/input
+      - ./harbor/data:/data
+      - ./harbor/generated:/compose_location
+      - ./harbor/common/config:/config
+      - /:/hostfs/:ro
+    networks:
+      - dev-internal
+
+  harbor-log:
+    container_name: worklab-alfa-dev-harbor-log
+    restart: always
+    image: goharbor/harbor-log:v2.12.2
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    depends_on:
+      harbor-prepare:
+        condition: service_completed_successfully
+    volumes:
+      - ./harbor/log:/var/log/docker
+      - ./harbor/common/config/log/logrotate.conf:/etc/logrotate.d/logrotate.conf:ro
+      - ./harbor/common/config/log/rsyslog_docker.conf:/etc/rsyslog.d/rsyslog_docker.conf:ro
+    ports:
+      - "127.0.0.1:1514:10514"
+    networks:
+      - dev-internal
+
+  harbor-registry:
+    container_name: worklab-alfa-dev-harbor-registry
+    restart: always
+    image: goharbor/registry-photon:v2.12.2
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    depends_on:
+      harbor-prepare:
+        condition: service_completed_successfully
+      harbor-log:
+        condition: service_started
+    volumes:
+      - ./harbor/data/registry:/storage
+      - ./harbor/common/config/registry:/etc/registry
+      - ./harbor/data/secret/registry/root.crt:/etc/registry/root.crt:ro
+      - ./harbor/common/config/shared/trust-certificates:/harbor_cust_cert:ro
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://localhost:1514
+        tag: harbor-registry
+    networks:
+      dev-internal:
+        aliases:
+          - registry
+
+  harbor-registryctl:
+    container_name: worklab-alfa-dev-harbor-registryctl
+    restart: always
+    image: goharbor/harbor-registryctl:v2.12.2
+    env_file:
+      - ./harbor/common/config/registryctl/env
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    depends_on:
+      harbor-prepare:
+        condition: service_completed_successfully
+      harbor-log:
+        condition: service_started
+    volumes:
+      - ./harbor/data/registry:/storage
+      - ./harbor/common/config/registry:/etc/registry
+      - ./harbor/common/config/registryctl/config.yml:/etc/registryctl/config.yml:ro
+      - ./harbor/common/config/shared/trust-certificates:/harbor_cust_cert:ro
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://localhost:1514
+        tag: harbor-registryctl
+    networks:
+      dev-internal:
+        aliases:
+          - registryctl
+
+  harbor-postgresql:
+    container_name: worklab-alfa-dev-harbor-postgresql
+    restart: always
+    image: goharbor/harbor-db:v2.12.2
+    env_file:
+      - ./harbor/common/config/db/env
+    shm_size: 1gb
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    depends_on:
+      harbor-prepare:
+        condition: service_completed_successfully
+      harbor-log:
+        condition: service_started
+    volumes:
+      - ./harbor/data/database:/var/lib/postgresql/data
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://localhost:1514
+        tag: harbor-postgresql
+    networks:
+      dev-internal:
+        aliases:
+          - postgresql
+
+  harbor-core:
+    container_name: worklab-alfa-dev-harbor-core
+    restart: always
+    image: goharbor/harbor-core:v2.12.2
+    env_file:
+      - ./harbor/common/config/core/env
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+    depends_on:
+      harbor-prepare:
+        condition: service_completed_successfully
+      harbor-log:
+        condition: service_started
+      harbor-registry:
+        condition: service_started
+      harbor-redis:
+        condition: service_started
+      harbor-postgresql:
+        condition: service_started
+    volumes:
+      - ./harbor/data/ca_download:/etc/core/ca
+      - ./harbor/data:/data
+      - ./harbor/common/config/core/certificates:/etc/core/certificates:ro
+      - ./harbor/common/config/core/app.conf:/etc/core/app.conf:ro
+      - ./harbor/data/secret/core/private_key.pem:/etc/core/private_key.pem:ro
+      - ./harbor/data/secret/keys/secretkey:/etc/core/key:ro
+      - ./harbor/common/config/shared/trust-certificates:/harbor_cust_cert:ro
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://localhost:1514
+        tag: harbor-core
+    networks:
+      dev-internal:
+        aliases:
+          - core
+
+  harbor-portal:
+    container_name: worklab-alfa-dev-harbor-portal
+    restart: always
+    image: goharbor/harbor-portal:v2.12.2
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    depends_on:
+      harbor-prepare:
+        condition: service_completed_successfully
+      harbor-log:
+        condition: service_started
+    volumes:
+      - ./harbor/common/config/portal/nginx.conf:/etc/nginx/nginx.conf:ro
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://localhost:1514
+        tag: harbor-portal
+    networks:
+      dev-internal:
+        aliases:
+          - portal
+
+  harbor-jobservice:
+    container_name: worklab-alfa-dev-harbor-jobservice
+    restart: always
+    image: goharbor/harbor-jobservice:v2.12.2
+    env_file:
+      - ./harbor/common/config/jobservice/env
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    depends_on:
+      harbor-prepare:
+        condition: service_completed_successfully
+      harbor-core:
+        condition: service_started
+    volumes:
+      - ./harbor/data/job_logs:/var/log/jobs
+      - ./harbor/common/config/jobservice/config.yml:/etc/jobservice/config.yml:ro
+      - ./harbor/common/config/shared/trust-certificates:/harbor_cust_cert:ro
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://localhost:1514
+        tag: harbor-jobservice
+    networks:
+      dev-internal:
+        aliases:
+          - jobservice
+
+  harbor-redis:
+    container_name: worklab-alfa-dev-harbor-redis
+    restart: always
+    image: goharbor/redis-photon:v2.12.2
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    depends_on:
+      harbor-prepare:
+        condition: service_completed_successfully
+      harbor-log:
+        condition: service_started
+    volumes:
+      - ./harbor/data/redis:/var/lib/redis
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://localhost:1514
+        tag: harbor-redis
+    networks:
+      dev-internal:
+        aliases:
+          - redis
+
+  harbor-trivy-adapter:
+    container_name: worklab-alfa-dev-harbor-trivy-adapter
+    restart: always
+    image: goharbor/trivy-adapter-photon:v2.12.2
+    env_file:
+      - ./harbor/common/config/trivy-adapter/env
+    cap_drop:
+      - ALL
+    depends_on:
+      harbor-prepare:
+        condition: service_completed_successfully
+      harbor-log:
+        condition: service_started
+      harbor-redis:
+        condition: service_started
+    volumes:
+      - ./harbor/data/trivy-adapter/trivy:/home/scanner/.cache/trivy
+      - ./harbor/data/trivy-adapter/reports:/home/scanner/.cache/reports
+      - ./harbor/common/config/shared/trust-certificates:/harbor_cust_cert:ro
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://localhost:1514
+        tag: harbor-trivy-adapter
+    networks:
+      dev-internal:
+        aliases:
+          - trivy-adapter
+
+  harbor:
+    container_name: worklab-alfa-dev-harbor
+    restart: always
+    image: goharbor/nginx-photon:v2.12.2
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    depends_on:
+      harbor-prepare:
+        condition: service_completed_successfully
+      harbor-registry:
+        condition: service_started
+      harbor-core:
+        condition: service_started
+      harbor-portal:
+        condition: service_started
+      harbor-log:
+        condition: service_started
+    ports:
+      - "30011:8080"
+    volumes:
+      - ./harbor/common/config/nginx:/etc/nginx:ro
+      - ./harbor/common/config/shared/trust-certificates:/harbor_cust_cert:ro
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://localhost:1514
+        tag: harbor
+    networks:
+      - dev-public
+      - dev-internal
+
+  sonarqube:
+    container_name: worklab-alfa-dev-sonarqube
+    restart: always
+    image: sonarqube:lts-community
+    ports:
+      - "30012:9000"
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
+    networks:
+      - dev-public
+
+  dependency-track:
+    container_name: worklab-alfa-dev-dependency-track
+    restart: always
+    image: dependencytrack/bundled:latest
+    ports:
+      - "30013:8080"
+    volumes:
+      - dependency-track-data:/data
+    networks:
+      - dev-public
+
+volumes:
+  gitlab-config:
+  gitlab-logs:
+  gitlab-data:
+  gitlab-runner-config:
+  sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:
+  dependency-track-data:
+
+networks:
+  dev-public:
+  dev-internal:

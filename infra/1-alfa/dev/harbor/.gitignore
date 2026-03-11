@@ -1,0 +1,11 @@
+# Runtime data
+data/ca_download/
+data/database/
+data/job_logs/
+data/redis/
+data/registry/
+data/trivy-adapter/
+
+# Generated artifacts
+generated/
+log/

@@ -1,0 +1,22 @@
+apiVersion: 1
+
+providers:
+  - name: Machine Resource Monitor
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards/machine.json
+
+  - name: Docker Container Monitor
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards/docker.json
+
+  - name: NGINX Network Monitor
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards/nginx.json
+
+  - name: GitLab Overview
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards/gitlab.json
