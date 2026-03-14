@@ -86,6 +86,10 @@ function main() {
     chown_dir "/home/vscode/.cache/uv"
     chown_dir ".serena/cache"
 
+    npm install -g npm pnpm
+    npm install -g git-cz
+    npm install -g @anthropic-ai/claude-code @openai/codex @github/copilot
+
     # 隠しディレクトリ以外のディレクトリを探索
     for dir in */; do
         # 末尾のスラッシュを削除

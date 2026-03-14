@@ -1,12 +1,9 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
-    "name": "Ubuntu",
+    "name": "devbox",
     "image": "mcr.microsoft.com/devcontainers/base:noble",
-    "runArgs": [
-        "--init",
-        "--rm"
-    ],
+    "runArgs": [],
     "mounts": [
         // Share the "AWS" creadentials with Windows or WSL2.
         "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/vscode/.aws,type=bind,consistency=cached",
@@ -26,9 +23,9 @@
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // "forwardPorts": [],
     // Use 'postCreateCommand' to run commands after the container is created.
-    "initializeCommand": "bash ./.devcontainer/initializeCommand.sh",
+    "initializeCommand": "echo $(powershell.exe -Command 'echo $env:UserName' | tr -d '\r')",
     "postCreateCommand": "bash ./.devcontainer/postCreateCommand.sh",
-    "postStartCommand": "bash ./.devcontainer/postStartCommand.sh",
+    "postStartCommand": "uname -a",
     // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
     // "remoteUser": "root"
     // Features to add to the dev container. More info: https://containers.dev/features.
@@ -36,32 +33,15 @@
         "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
             "packages": "curl,wget,git,jq,ca-certificates,build-essential,ripgrep"
         },
-        "ghcr.io/devcontainers/features/aws-cli:1": {},
-        "ghcr.io/devcontainers-extra/features/aws-cdk:2": {},
-        "ghcr.io/devcontainers-extra/features/npm-packages:1": {
-            "packages": "npm,pnpm,git-cz,@anthropic-ai/claude-code,@openai/codex,@github/copilot,@biomejs/biome@2.3.13"
-        },
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {
-            "moby": true,
-            "installDockerBuildx": true,
-            "installDockerComposeSwitch": true,
-            "version": "latest",
-            "dockerDashComposeVersion": "v2"
-        },
-        "ghcr.io/devcontainers/features/node:1": {
-            "nodeGypDependencies": true,
-            "version": "lts",
-            "pnpmVersion": "latest",
-            "nvmVersion": "latest"
-        },
-        "ghcr.io/devcontainers/features/python:1": {
-            "installTools": true,
-            "version": "3.12"
-        },
-        "ghcr.io/devcontainers-extra/features/uv:1": {},
+        // "ghcr.io/devcontainers/features/aws-cli:1": {},
+        // "ghcr.io/devcontainers-extra/features/aws-cdk:2": {},
+        // "ghcr.io/devcontainers/features/azure-cli:1": {},
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/node:1": {},
+        "ghcr.io/devcontainers/features/python:1": {},
+        // "ghcr.io/devcontainers-extra/features/uv:1": {},
         "ghcr.io/devcontainer-community/devcontainer-features/astral.sh-uv:1": {
-            "shellautocompletion": true,
-            "version": "latest"
+            "shellautocompletion": true
         },
         "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
     },
