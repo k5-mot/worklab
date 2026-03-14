@@ -2,11 +2,27 @@ services:
   open-webui:
     container_name: worklab-alfa-llm-open-webui
     restart: always
-    image: ghcr.io/open-webui/open-webui:main
+    image: ghcr.io/open-webui/open-webui:v0.8.10
     depends_on:
       - ollama
+      - open-webui-redis
+      - open-webui-postgres
+      - qdrant
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
+      DATABASE_TYPE: postgresql
+      DATABASE_USER: openwebui
+      DATABASE_PASSWORD: ${OPEN_WEBUI_POSTGRES_PASSWORD:-openwebui}
+      DATABASE_HOST: open-webui-postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: openwebui
+      ENABLE_WEBSOCKET_SUPPORT: "true"
+      WEBSOCKET_MANAGER: redis
+      REDIS_URL: redis://open-webui-redis:6379/0
+      WEBSOCKET_REDIS_URL: redis://open-webui-redis:6379/1
+      VECTOR_DB: qdrant
+      QDRANT_URI: http://qdrant:6333
+      WEBUI_SECRET_KEY: ${OPEN_WEBUI_SECRET_KEY:-worklab-alfa-open-webui-secret-key}
     ports:
       - "30040:8080"
     volumes:
@@ -18,10 +34,7 @@ services:
   ollama:
     container_name: worklab-alfa-llm-ollama
     restart: always
-    image: ollama/ollama:latest
-    depends_on:
-      - ollama-redis
-      - ollama-postgres
+    image: ollama/ollama:0.18.0
     ports:
       - "30041:11434"
     volumes:
@@ -30,32 +43,32 @@ services:
       - llm-public
       - llm-internal
 
-  ollama-redis:
-    container_name: worklab-alfa-llm-ollama-redis
+  open-webui-redis:
+    container_name: worklab-alfa-llm-open-webui-redis
     restart: always
-    image: redis:7-alpine
+    image: redis:7.4.8-alpine3.21
     volumes:
-      - ollama-redis-data:/data
+      - open-webui-redis-data:/data
     networks:
       - llm-internal
 
-  ollama-postgres:
-    container_name: worklab-alfa-llm-ollama-postgres
+  open-webui-postgres:
+    container_name: worklab-alfa-llm-open-webui-postgres
     restart: always
-    image: postgres:16-alpine
+    image: postgres:16.10-alpine
     environment:
-      POSTGRES_DB: ollama
-      POSTGRES_USER: ollama
-      POSTGRES_PASSWORD: ${OLLAMA_POSTGRES_PASSWORD:-ollama}
+      POSTGRES_DB: openwebui
+      POSTGRES_USER: openwebui
+      POSTGRES_PASSWORD: ${OPEN_WEBUI_POSTGRES_PASSWORD:-openwebui}
     volumes:
-      - ollama-postgres-data:/var/lib/postgresql/data
+      - open-webui-postgres-data:/var/lib/postgresql/data
     networks:
       - llm-internal
 
   qdrant:
     container_name: worklab-alfa-llm-qdrant
     restart: always
-    image: qdrant/qdrant:latest
+    image: qdrant/qdrant:v1.17.0
     volumes:
       - qdrant-data:/qdrant/storage
     networks:
@@ -64,6 +77,8 @@ services:
   paddleocr:
     container_name: worklab-alfa-llm-paddleocr
     restart: always
+    profiles:
+      - webui-media
     build:
       context: ./paddleocr
       dockerfile: Dockerfile
@@ -73,14 +88,19 @@ services:
   searxng:
     container_name: worklab-alfa-llm-searxng
     restart: always
-    image: searxng/searxng:latest
+    image: searxng/searxng:2026.3.13-3c1f68c59
+    ports:
+      - "30047:8080"
     networks:
+      - llm-public
       - llm-internal
 
   whisper:
     container_name: worklab-alfa-llm-whisper
     restart: always
-    image: onerahmet/openai-whisper-asr-webservice:latest
+    profiles:
+      - webui-media
+    image: onerahmet/openai-whisper-asr-webservice:v1.9.1
     environment:
       ASR_MODEL: ${WHISPER_MODEL:-base}
     networks:
@@ -89,13 +109,17 @@ services:
   kokoro-tts:
     container_name: worklab-alfa-llm-kokoro-tts
     restart: always
-    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
+    profiles:
+      - webui-media
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:v0.2.4
     networks:
       - llm-internal
 
   comfyui:
     container_name: worklab-alfa-llm-comfyui
     restart: always
+    profiles:
+      - webui-image
     build:
       context: ./comfyui
       dockerfile: Dockerfile
@@ -110,7 +134,9 @@ services:
   langfuse:
     container_name: worklab-alfa-llm-langfuse
     restart: always
-    image: docker.io/langfuse/langfuse:3
+    profiles:
+      - langfuse
+    image: docker.io/langfuse/langfuse:3.157.0
     env_file:
       - ./langfuse/langfuse.env
     depends_on:
@@ -131,7 +157,9 @@ services:
   langfuse-worker:
     container_name: worklab-alfa-llm-langfuse-worker
     restart: always
-    image: docker.io/langfuse/langfuse-worker:3
+    profiles:
+      - langfuse
+    image: docker.io/langfuse/langfuse-worker:3.157.0
     env_file:
       - ./langfuse/langfuse.env
     depends_on:
@@ -149,7 +177,9 @@ services:
   langfuse-clickhouse:
     container_name: worklab-alfa-llm-langfuse-clickhouse
     restart: always
-    image: docker.io/clickhouse/clickhouse-server
+    profiles:
+      - langfuse
+    image: docker.io/clickhouse/clickhouse-server:26.2.4.23
     user: "101:101"
     environment:
       CLICKHOUSE_DB: default
@@ -170,7 +200,9 @@ services:
   langfuse-minio:
     container_name: worklab-alfa-llm-langfuse-minio
     restart: always
-    image: cgr.dev/chainguard/minio
+    profiles:
+      - langfuse
+    image: cgr.dev/chainguard/minio:0.20251015
     entrypoint: sh
     command:
       - -c
@@ -198,7 +230,9 @@ services:
   langfuse-redis:
     container_name: worklab-alfa-llm-langfuse-redis
     restart: always
-    image: docker.io/redis:7
+    profiles:
+      - langfuse
+    image: docker.io/redis:7.4.8
     command:
       - --requirepass
       - myredissecret
@@ -221,7 +255,9 @@ services:
   langfuse-postgres:
     container_name: worklab-alfa-llm-langfuse-postgres
     restart: always
-    image: docker.io/postgres:17
+    profiles:
+      - langfuse
+    image: docker.io/postgres:17.6
     environment:
       POSTGRES_USER: langfuse
       POSTGRES_PASSWORD: langfuse
@@ -243,7 +279,9 @@ services:
   n8n:
     container_name: worklab-alfa-llm-n8n
     restart: always
-    image: n8nio/n8n:latest
+    profiles:
+      - n8n
+    image: n8nio/n8n:2.11.4
     ports:
       - "30044:5678"
     volumes:
@@ -255,7 +293,9 @@ services:
   dify-init-permissions:
     container_name: worklab-alfa-llm-dify-init-permissions
     restart: "no"
-    image: busybox:latest
+    profiles:
+      - dify
+    image: busybox:1.37.0
     command:
       - sh
       - -c
@@ -276,6 +316,8 @@ services:
   dify-api:
     container_name: worklab-alfa-llm-dify-api
     restart: always
+    profiles:
+      - dify
     image: langgenius/dify-api:1.13.0
     env_file:
       - ./dify/dify.env
@@ -305,6 +347,8 @@ services:
   dify-worker:
     container_name: worklab-alfa-llm-dify-worker
     restart: always
+    profiles:
+      - dify
     image: langgenius/dify-api:1.13.0
     env_file:
       - ./dify/dify.env
@@ -334,6 +378,8 @@ services:
   dify-worker-beat:
     container_name: worklab-alfa-llm-dify-worker-beat
     restart: always
+    profiles:
+      - dify
     image: langgenius/dify-api:1.13.0
     env_file:
       - ./dify/dify.env
@@ -361,6 +407,8 @@ services:
   dify-web:
     container_name: worklab-alfa-llm-dify-web
     restart: always
+    profiles:
+      - dify
     image: langgenius/dify-web:1.13.0
     env_file:
       - ./dify/dify.env
@@ -373,7 +421,9 @@ services:
   dify-db-postgres:
     container_name: worklab-alfa-llm-dify-db-postgres
     restart: always
-    image: postgres:15-alpine
+    profiles:
+      - dify
+    image: postgres:15.14-alpine3.22
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: difyai123456
@@ -408,7 +458,9 @@ services:
   dify-redis:
     container_name: worklab-alfa-llm-dify-redis
     restart: always
-    image: redis:6-alpine
+    profiles:
+      - dify
+    image: redis:6.2.21-alpine3.21
     environment:
       REDISCLI_AUTH: difyai123456
     command: redis-server --requirepass difyai123456
@@ -427,6 +479,8 @@ services:
   dify-sandbox:
     container_name: worklab-alfa-llm-dify-sandbox
     restart: always
+    profiles:
+      - dify
     image: langgenius/dify-sandbox:0.2.12
     environment:
       API_KEY: dify-sandbox
@@ -454,6 +508,8 @@ services:
   dify-plugin-daemon:
     container_name: worklab-alfa-llm-dify-plugin-daemon
     restart: always
+    profiles:
+      - dify
     image: langgenius/dify-plugin-daemon:0.4.1-local
     env_file:
       - ./dify/dify.env
@@ -484,7 +540,9 @@ services:
   dify-ssrf-proxy:
     container_name: worklab-alfa-llm-dify-ssrf-proxy
     restart: always
-    image: ubuntu/squid:latest
+    profiles:
+      - dify
+    image: ubuntu/squid:5.2-22.04_beta
     entrypoint:
       - sh
       - -c
@@ -505,6 +563,8 @@ services:
   dify-weaviate:
     container_name: worklab-alfa-llm-dify-weaviate
     restart: always
+    profiles:
+      - dify
     image: semitechnologies/weaviate:1.27.0
     environment:
       PERSISTENCE_DATA_PATH: /var/lib/weaviate
@@ -538,7 +598,9 @@ services:
   dify:
     container_name: worklab-alfa-llm-dify
     restart: always
-    image: nginx:latest
+    profiles:
+      - dify
+    image: nginx:1.29.1
     depends_on:
       dify-api:
         condition: service_started
@@ -580,8 +642,8 @@ services:
 volumes:
   open-webui-data:
   ollama-data:
-  ollama-redis-data:
-  ollama-postgres-data:
+  open-webui-redis-data:
+  open-webui-postgres-data:
   qdrant-data:
   comfyui-data:
   langfuse-clickhouse-data:

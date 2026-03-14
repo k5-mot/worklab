@@ -45,6 +45,7 @@
 | llm | n8n | 30044 |
 | llm | Dify | 30045 |
 | llm | Langfuse MinIO | 30046 |
+| llm | SearXNG | 30047 |
 
 ### Non-functional Requirements
 
@@ -72,6 +73,5 @@
 
 ## Open Questions
 
-- `SearXNG` の public host port を固定するかは未確定
 - `ops` stack の internal service に外部 UI を設けるかは未確定
 - `SeaweedFS` を `prj` 以外の stack でも共通利用するかは未確定

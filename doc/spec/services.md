@@ -97,11 +97,11 @@
 | --- | --- | --- | --- |
 | Open WebUI | LLM UI | public | host port `30040` |
 | Ollama | model runtime API | public | host port `30041` |
-| Ollama Redis | Ollama dependency | internal | service-local dependency |
-| Ollama PostgreSQL | Ollama dependency | internal | service-local dependency |
+| Open WebUI Redis | Open WebUI cache backend | internal | service-local dependency |
+| Open WebUI PostgreSQL | Open WebUI relational database | internal | service-local dependency |
 | Qdrant | vector store | internal | no public host port |
 | PaddleOCR | OCR | internal | no public host port |
-| SearXNG | search meta engine | internal | no public host port |
+| SearXNG | search meta engine UI | public | host port `30047` |
 | Whisper | speech-to-text | internal | no public host port |
 | Kokoro-TTS | text-to-speech | internal | no public host port |
 | ComfyUI | image generation UI | public | host port `30042` |

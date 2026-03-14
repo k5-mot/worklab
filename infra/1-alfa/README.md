@@ -91,12 +91,12 @@
 
 - Open WebUI: `30040`
   - Ollama
+- Open WebUI Redis
+- Open WebUI PostgreSQL
 - Ollama: `30041`
-  - ollama-redis
-  - ollama-postgres
 - Qdrant
 - PaddleOCR
-- SearXNG
+- SearXNG: `30047`
 - Whisper
 - Kokoro-TTS
 - ComfyUI: `30042`
