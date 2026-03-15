@@ -97,6 +97,7 @@
 | --- | --- | --- | --- |
 | Open WebUI | LLM UI | public | host port `30040` |
 | Ollama | model runtime API | public | host port `30041` |
+| Ollama Init | Ollama bootstrap job | internal | one-shot job that preloads the default model |
 | Open WebUI Redis | Open WebUI cache backend | internal | service-local dependency |
 | Open WebUI PostgreSQL | Open WebUI relational database | internal | service-local dependency |
 | Qdrant | vector store | internal | no public host port |

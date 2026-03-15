@@ -4,10 +4,16 @@ services:
     restart: always
     image: ghcr.io/open-webui/open-webui:v0.8.10
     depends_on:
-      - ollama
-      - open-webui-redis
-      - open-webui-postgres
-      - qdrant
+      ollama:
+        condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
+      open-webui-redis:
+        condition: service_started
+      open-webui-postgres:
+        condition: service_started
+      qdrant:
+        condition: service_started
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
       DATABASE_TYPE: postgresql
@@ -41,6 +47,35 @@ services:
       - ollama-data:/root/.ollama
     networks:
       - llm-public
+      - llm-internal
+
+  ollama-init:
+    container_name: worklab-alfa-llm-ollama-init
+    restart: "no"
+    image: ollama/ollama:0.18.0
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_BOOTSTRAP_MODEL: ${OLLAMA_BOOTSTRAP_MODEL:-qwen2.5:1.5b}
+    entrypoint:
+      - /bin/sh
+      - -c
+    command:
+      - |
+        echo "Waiting for Ollama API..."
+        until ollama list >/dev/null 2>&1; do
+          sleep 2
+        done
+        if ollama show "$${OLLAMA_BOOTSTRAP_MODEL}" >/dev/null 2>&1; then
+          echo "Model already exists: $${OLLAMA_BOOTSTRAP_MODEL}"
+          exit 0
+        fi
+        echo "Pulling bootstrap model: $${OLLAMA_BOOTSTRAP_MODEL}"
+        ollama pull "$${OLLAMA_BOOTSTRAP_MODEL}"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
       - llm-internal
 
   open-webui-redis:

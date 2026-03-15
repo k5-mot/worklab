@@ -91,6 +91,7 @@
 
 - Open WebUI: `30040`
   - Ollama
+- Ollama Init
 - Open WebUI Redis
 - Open WebUI PostgreSQL
 - Ollama: `30041`

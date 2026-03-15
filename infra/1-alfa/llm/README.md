@@ -4,7 +4,7 @@
 
 この compose はデフォルトではコア機能のみ起動します。
 
-- デフォルト: `open-webui`, `ollama`, `open-webui-redis`, `open-webui-postgres`, `qdrant`, `searxng`
+- デフォルト: `open-webui`, `ollama`, `ollama-init`, `open-webui-redis`, `open-webui-postgres`, `qdrant`, `searxng`
 - `webui-media` profile: `paddleocr`, `whisper`, `kokoro-tts`
 - `webui-image` profile: `comfyui`
 - `langfuse` profile: `langfuse` 一式
@@ -28,6 +28,12 @@ docker compose --profile webui-image up -d
 docker compose --profile langfuse up -d
 docker compose --profile n8n up -d
 docker compose --profile dify up -d
+```
+
+初回起動時は `ollama-init` が既定モデルを 1 つ取得します。既定値は `qwen2.5:1.5b` で、`OLLAMA_BOOTSTRAP_MODEL` 環境変数で上書きできます。
+
+```bash
+OLLAMA_BOOTSTRAP_MODEL=llama3.2:3b docker compose up -d
 ```
 
 回線やレジストリアクセスが不安定な環境では、pull の並列数を落とすと再発しにくくなります。
