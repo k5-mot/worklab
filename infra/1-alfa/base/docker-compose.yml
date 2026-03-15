@@ -33,9 +33,47 @@ services:
     networks:
       - base-public
 
+  infisical:
+    container_name: worklab-alfa-base-infisical
+    restart: always
+    image: infisical/infisical:v0.158.13
+    environment:
+      - ENCRYPTION_KEY=f40c9178624764ad85a6830b37ce239a
+      - AUTH_SECRET="q6LRi7c717a3DQ8JUxlWYkZpMhG4+RHLoFUVt3Bvo2U="
+      - DB_CONNECTION_URI=http://infisical-postgres:5432/infisical-db
+      - REDIS_URL=redis://infisical-redis:6379
+      - SITE_URL="<>"
+    ports:
+      - "30002:3000"
+
+  infisical-redis:
+    container_name: worklab-alfa-base-infisical-redis
+    restart: always
+    image: redis:7.4.8-alpine3.21
+    volumes:
+      - infisical-redis-data:/data
+    networks:
+      - base-internal
+
+  infisical-postgres:
+    container_name: worklab-alfa-base-infisical-postgres
+    restart: always
+    image: postgres:16.10-alpine
+    environment:
+      POSTGRES_DB: infisical-db
+      POSTGRES_USER: infisical-user
+      POSTGRES_PASSWORD: ${INFISICAL_POSTGRES_PASSWORD:-infisical}
+    volumes:
+      - infisical-postgres-data:/var/lib/postgresql/data
+    networks:
+      - base-internal
+
 volumes:
   keycloak-data:
   openbao-data:
+  infisical-redis-data:
+  infisical-postgres-data:
 
 networks:
   base-public:
+  base-internal:

@@ -23,108 +23,111 @@
 
 #### base
 
-| Service | Role | Exposure | Notes |
-| --- | --- | --- | --- |
-| Keycloak | identity provider | public | host port `30000` |
-| OpenBao | secret management | public | host port `30001` |
+| Service              | Role                              | Exposure | Notes                    |
+| -------------------- | --------------------------------- | -------- | ------------------------ |
+| Keycloak             | identity provider                 | public   | host port `30000`        |
+| OpenBao              | secret management                 | public   | host port `30001`        |
+| Infisical            | secret management platform UI/API | public   | host port `30002`        |
+| Infisical Redis      | Infisical cache backend           | internal | service-local dependency |
+| Infisical PostgreSQL | Infisical relational database     | internal | service-local dependency |
 
 #### dev
 
-| Service | Role | Exposure | Notes |
-| --- | --- | --- | --- |
-| GitLab EE | source control and CI entrypoint | public | host port `30010` |
-| GitLab Runner | CI execution worker | internal | GitLab 専用 worker |
-| Kroki | diagram rendering gateway | internal | companion 群を束ねる |
-| kroki-mermaid | Kroki companion | internal | Mermaid renderer |
-| kroki-bpmn | Kroki companion | internal | BPMN renderer |
-| kroki-excalidraw | Kroki companion | internal | Excalidraw renderer |
-| kroki-diagramsnet | Kroki companion | internal | diagrams.net renderer |
-| Harbor | container registry | public | host port `30011` |
-| Harbor Prepare | Harbor config generation job | internal | one-shot job for official Harbor config and secrets |
-| Harbor Log | Harbor log collector | internal | syslog endpoint for Harbor components |
-| Harbor Registry | Harbor image registry | internal | official Harbor registry service |
-| Harbor Registryctl | Harbor registry control plane | internal | official Harbor companion |
-| Harbor PostgreSQL | Harbor relational database | internal | service-local dependency |
-| Harbor Core | Harbor backend API | internal | official Harbor companion |
-| Harbor Portal | Harbor UI container | internal | official Harbor companion |
-| Harbor Jobservice | Harbor async worker | internal | official Harbor companion |
-| Harbor Redis | Harbor cache backend | internal | service-local dependency |
-| Harbor Trivy Adapter | Harbor vulnerability scanner | internal | official Harbor companion |
-| SonarQube | code quality | public | host port `30012` |
-| Dependency-Track | SBOM and dependency risk | public | host port `30013` |
+| Service              | Role                             | Exposure | Notes                                               |
+| -------------------- | -------------------------------- | -------- | --------------------------------------------------- |
+| GitLab EE            | source control and CI entrypoint | public   | host port `30010`                                   |
+| GitLab Runner        | CI execution worker              | internal | GitLab 専用 worker                                  |
+| Kroki                | diagram rendering gateway        | internal | companion 群を束ねる                                |
+| kroki-mermaid        | Kroki companion                  | internal | Mermaid renderer                                    |
+| kroki-bpmn           | Kroki companion                  | internal | BPMN renderer                                       |
+| kroki-excalidraw     | Kroki companion                  | internal | Excalidraw renderer                                 |
+| kroki-diagramsnet    | Kroki companion                  | internal | diagrams.net renderer                               |
+| Harbor               | container registry               | public   | host port `30011`                                   |
+| Harbor Prepare       | Harbor config generation job     | internal | one-shot job for official Harbor config and secrets |
+| Harbor Log           | Harbor log collector             | internal | syslog endpoint for Harbor components               |
+| Harbor Registry      | Harbor image registry            | internal | official Harbor registry service                    |
+| Harbor Registryctl   | Harbor registry control plane    | internal | official Harbor companion                           |
+| Harbor PostgreSQL    | Harbor relational database       | internal | service-local dependency                            |
+| Harbor Core          | Harbor backend API               | internal | official Harbor companion                           |
+| Harbor Portal        | Harbor UI container              | internal | official Harbor companion                           |
+| Harbor Jobservice    | Harbor async worker              | internal | official Harbor companion                           |
+| Harbor Redis         | Harbor cache backend             | internal | service-local dependency                            |
+| Harbor Trivy Adapter | Harbor vulnerability scanner     | internal | official Harbor companion                           |
+| SonarQube            | code quality                     | public   | host port `30012`                                   |
+| Dependency-Track     | SBOM and dependency risk         | public   | host port `30013`                                   |
 
 #### ops
 
-| Service | Role | Exposure | Notes |
-| --- | --- | --- | --- |
-| Uptime Kuma | uptime monitoring UI | public | host port `30020` |
-| Portainer | container management UI | public | host port `30021` |
-| Grafana | visualization UI | public | host port `30022` |
-| Prometheus | metrics collection | public | host port `30023` |
-| node-exporter | host metrics exporter | internal | scrape target |
-| cAdvisor | container metrics exporter | internal | scrape target |
-| Alertmanager | alert routing | internal | notification hub |
-| Loki | log aggregation | internal | logging backend |
-| Tempo | trace aggregation | internal | tracing backend |
+| Service       | Role                       | Exposure | Notes             |
+| ------------- | -------------------------- | -------- | ----------------- |
+| Uptime Kuma   | uptime monitoring UI       | public   | host port `30020` |
+| Portainer     | container management UI    | public   | host port `30021` |
+| Grafana       | visualization UI           | public   | host port `30022` |
+| Prometheus    | metrics collection         | public   | host port `30023` |
+| node-exporter | host metrics exporter      | internal | scrape target     |
+| cAdvisor      | container metrics exporter | internal | scrape target     |
+| Alertmanager  | alert routing              | internal | notification hub  |
+| Loki          | log aggregation            | internal | logging backend   |
+| Tempo         | trace aggregation          | internal | tracing backend   |
 
 #### prj
 
-| Service | Role | Exposure | Notes |
-| --- | --- | --- | --- |
-| Backstage | developer portal | public | host port `30030` |
-| Outline | knowledge base | public | host port `30031`, uses `SeaweedFS` as S3-compatible storage |
-| Outline PostgreSQL | Outline relational database | internal | service-local dependency |
-| Outline Redis | Outline cache backend | internal | service-local dependency |
-| Plane | project management | public | host port `30032`, proxy entrypoint for Plane UI and API |
-| Plane Web | Plane frontend UI | internal | Plane companion |
-| Plane Space | Plane space UI | internal | Plane companion |
-| Plane Admin | Plane admin UI | internal | Plane companion |
-| Plane Live | Plane realtime server | internal | Plane companion |
-| Plane API | Plane backend API | internal | Plane companion |
-| Plane Worker | Plane async worker | internal | Plane companion |
-| Plane Beat Worker | Plane scheduled worker | internal | Plane companion |
-| Plane Migrator | Plane database migrator | internal | Plane companion |
-| Plane PostgreSQL | Plane relational database | internal | service-local dependency |
-| Plane Valkey | Plane cache backend | internal | service-local dependency |
-| Plane RabbitMQ | Plane message broker | internal | service-local dependency |
-| Ghost | publishing and documentation | public | host port `30033` |
-| SeaweedFS | S3-compatible object storage | public | host port `30034`, `Plane` and `Outline` storage endpoint |
-| SeaweedFS Init | SeaweedFS bucket bootstrap job | internal | creates `Plane` and `Outline` upload buckets |
+| Service            | Role                           | Exposure | Notes                                                        |
+| ------------------ | ------------------------------ | -------- | ------------------------------------------------------------ |
+| Backstage          | developer portal               | public   | host port `30030`                                            |
+| Outline            | knowledge base                 | public   | host port `30031`, uses `SeaweedFS` as S3-compatible storage |
+| Outline PostgreSQL | Outline relational database    | internal | service-local dependency                                     |
+| Outline Redis      | Outline cache backend          | internal | service-local dependency                                     |
+| Plane              | project management             | public   | host port `30032`, proxy entrypoint for Plane UI and API     |
+| Plane Web          | Plane frontend UI              | internal | Plane companion                                              |
+| Plane Space        | Plane space UI                 | internal | Plane companion                                              |
+| Plane Admin        | Plane admin UI                 | internal | Plane companion                                              |
+| Plane Live         | Plane realtime server          | internal | Plane companion                                              |
+| Plane API          | Plane backend API              | internal | Plane companion                                              |
+| Plane Worker       | Plane async worker             | internal | Plane companion                                              |
+| Plane Beat Worker  | Plane scheduled worker         | internal | Plane companion                                              |
+| Plane Migrator     | Plane database migrator        | internal | Plane companion                                              |
+| Plane PostgreSQL   | Plane relational database      | internal | service-local dependency                                     |
+| Plane Valkey       | Plane cache backend            | internal | service-local dependency                                     |
+| Plane RabbitMQ     | Plane message broker           | internal | service-local dependency                                     |
+| Ghost              | publishing and documentation   | public   | host port `30033`                                            |
+| SeaweedFS          | S3-compatible object storage   | public   | host port `30034`, `Plane` and `Outline` storage endpoint    |
+| SeaweedFS Init     | SeaweedFS bucket bootstrap job | internal | creates `Plane` and `Outline` upload buckets                 |
 
 #### llm
 
-| Service | Role | Exposure | Notes |
-| --- | --- | --- | --- |
-| Open WebUI | LLM UI | public | host port `30040` |
-| Ollama | model runtime API | public | host port `30041` |
-| Ollama Init | Ollama bootstrap job | internal | one-shot job that preloads the default model |
-| Open WebUI Redis | Open WebUI cache backend | internal | service-local dependency |
-| Open WebUI PostgreSQL | Open WebUI relational database | internal | service-local dependency |
-| Qdrant | vector store | internal | no public host port |
-| PaddleOCR | OCR | internal | no public host port |
-| SearXNG | search meta engine UI | public | host port `30047` |
-| Whisper | speech-to-text | internal | no public host port |
-| Kokoro-TTS | text-to-speech | internal | no public host port |
-| ComfyUI | image generation UI | public | host port `30042` |
-| Langfuse | LLM observability | public | host port `30043` |
-| Langfuse Worker | Langfuse async worker | internal | official Langfuse companion |
-| Langfuse ClickHouse | Langfuse analytics store | internal | service-local dependency |
-| Langfuse MinIO | Langfuse object storage | public | host port `30046`, S3 endpoint for Langfuse uploads |
-| Langfuse Redis | Langfuse dependency | internal | service-local dependency |
-| Langfuse PostgreSQL | Langfuse dependency | internal | service-local dependency |
-| n8n | workflow automation | public | host port `30044` |
-| Dify | LLM application platform | public | host port `30045` |
-| Dify Init Permissions | Dify storage bootstrap job | internal | one-shot job for app storage permissions |
-| Dify API | Dify backend API | internal | official Dify companion |
-| Dify Worker | Dify async worker | internal | official Dify companion |
-| Dify Worker Beat | Dify scheduler | internal | official Dify companion |
-| Dify Web | Dify frontend UI | internal | official Dify companion |
-| Dify PostgreSQL | Dify relational database | internal | service-local dependency |
-| Dify Redis | Dify cache backend | internal | service-local dependency |
-| Dify Sandbox | Dify code execution sandbox | internal | official Dify companion |
-| Dify Plugin Daemon | Dify plugin runtime | internal | official Dify companion |
-| Dify SSRF Proxy | Dify outbound proxy | internal | official Dify companion |
-| Dify Weaviate | Dify vector store | internal | official Dify default vector backend |
+| Service               | Role                           | Exposure | Notes                                                     |
+| --------------------- | ------------------------------ | -------- | --------------------------------------------------------- |
+| Open WebUI            | LLM UI                         | public   | host port `30040`                                         |
+| Ollama                | model runtime API              | public   | host port `30041`                                         |
+| Ollama Init           | Ollama bootstrap job           | internal | one-shot job that preloads bootstrap and embedding models |
+| Open WebUI Redis      | Open WebUI cache backend       | internal | service-local dependency                                  |
+| Open WebUI PostgreSQL | Open WebUI relational database | internal | service-local dependency                                  |
+| Open WebUI Pipelines  | Open WebUI pipeline runtime    | internal | Open WebUI companion                                      |
+| ChromaDB              | vector store                   | public   | host port `30049`, Open WebUI vector backend              |
+| Apache Tika           | document extraction server     | public   | host port `30048`, Open WebUI content extraction backend  |
+| SearXNG               | search meta engine UI          | public   | host port `30047`                                         |
+| Kokoro Web            | text-to-speech API             | public   | host port `3000`, OpenAI-compatible TTS endpoint          |
+| ComfyUI               | image generation UI            | public   | host port `30042`                                         |
+| Langfuse              | LLM observability              | public   | host port `30043`                                         |
+| Langfuse Worker       | Langfuse async worker          | internal | official Langfuse companion                               |
+| Langfuse ClickHouse   | Langfuse analytics store       | internal | service-local dependency                                  |
+| Langfuse MinIO        | Langfuse object storage        | public   | host port `30046`, S3 endpoint for Langfuse uploads       |
+| Langfuse Redis        | Langfuse dependency            | internal | service-local dependency                                  |
+| Langfuse PostgreSQL   | Langfuse dependency            | internal | service-local dependency                                  |
+| n8n                   | workflow automation            | public   | host port `30044`                                         |
+| Dify                  | LLM application platform       | public   | host port `30045`                                         |
+| Dify Init Permissions | Dify storage bootstrap job     | internal | one-shot job for app storage permissions                  |
+| Dify API              | Dify backend API               | internal | official Dify companion                                   |
+| Dify Worker           | Dify async worker              | internal | official Dify companion                                   |
+| Dify Worker Beat      | Dify scheduler                 | internal | official Dify companion                                   |
+| Dify Web              | Dify frontend UI               | internal | official Dify companion                                   |
+| Dify PostgreSQL       | Dify relational database       | internal | service-local dependency                                  |
+| Dify Redis            | Dify cache backend             | internal | service-local dependency                                  |
+| Dify Sandbox          | Dify code execution sandbox    | internal | official Dify companion                                   |
+| Dify Plugin Daemon    | Dify plugin runtime            | internal | official Dify companion                                   |
+| Dify SSRF Proxy       | Dify outbound proxy            | internal | official Dify companion                                   |
+| Dify Weaviate         | Dify vector store              | internal | official Dify default vector backend                      |
 
 ### Non-functional Requirements
 

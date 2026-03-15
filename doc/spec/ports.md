@@ -21,31 +21,35 @@
 
 ### Functional Requirements
 
-| Stack | Service | Public Host Port |
-| --- | --- | ---: |
-| base | Keycloak | 30000 |
-| base | OpenBao | 30001 |
-| dev | GitLab EE | 30010 |
-| dev | Harbor | 30011 |
-| dev | SonarQube | 30012 |
-| dev | Dependency-Track | 30013 |
-| ops | Uptime Kuma | 30020 |
-| ops | Portainer | 30021 |
-| ops | Grafana | 30022 |
-| ops | Prometheus | 30023 |
-| prj | Backstage | 30030 |
-| prj | Outline | 30031 |
-| prj | Plane | 30032 |
-| prj | Ghost | 30033 |
-| prj | SeaweedFS | 30034 |
-| llm | Open WebUI | 30040 |
-| llm | Ollama | 30041 |
-| llm | ComfyUI | 30042 |
-| llm | Langfuse | 30043 |
-| llm | n8n | 30044 |
-| llm | Dify | 30045 |
-| llm | Langfuse MinIO | 30046 |
-| llm | SearXNG | 30047 |
+| Stack | Service          | Public Host Port |
+| ----- | ---------------- | ---------------: |
+| base  | Keycloak         |            30000 |
+| base  | OpenBao          |            30001 |
+| base  | Infisical        |            30002 |
+| dev   | GitLab EE        |            30010 |
+| dev   | Harbor           |            30011 |
+| dev   | SonarQube        |            30012 |
+| dev   | Dependency-Track |            30013 |
+| ops   | Uptime Kuma      |            30020 |
+| ops   | Portainer        |            30021 |
+| ops   | Grafana          |            30022 |
+| ops   | Prometheus       |            30023 |
+| prj   | Backstage        |            30030 |
+| prj   | Outline          |            30031 |
+| prj   | Plane            |            30032 |
+| prj   | Ghost            |            30033 |
+| prj   | SeaweedFS        |            30034 |
+| llm   | Kokoro Web       |             3000 |
+| llm   | Open WebUI       |            30040 |
+| llm   | Ollama           |            30041 |
+| llm   | ComfyUI          |            30042 |
+| llm   | Langfuse         |            30043 |
+| llm   | n8n              |            30044 |
+| llm   | Dify             |            30045 |
+| llm   | Langfuse MinIO   |            30046 |
+| llm   | SearXNG          |            30047 |
+| llm   | Apache Tika      |            30048 |
+| llm   | ChromaDB         |            30049 |
 
 ### Non-functional Requirements
 

@@ -19,9 +19,9 @@
 
 ```text
 worklab
-├── base: Keycloak, OpenBao
+├── base: Keycloak, OpenBao, Infisical
 ├── dev: GitLab EE, GitLab Runner, Kroki, Harbor, SonarQube, Dependency-Track
 ├── ops: Uptime Kuma, Portainer, Grafana, Prometheus, node-exporter, cAdvisor, Alertmanager, Loki, Tempo
 ├── prj: Backstage, Outline, Plane, Ghost, SeaweedFS
-└── llm: Open WebUI, Ollama, Qdrant, PaddleOCR, SearXNG, Whisper, Kokoro-TTS, ComfyUI, Langfuse, n8n, Dify
+└── llm: Open WebUI, Pipelines, Ollama, ChromaDB, Apache Tika, SearXNG, Kokoro Web, ComfyUI, Langfuse, n8n, Dify
 ```

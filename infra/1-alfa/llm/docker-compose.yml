@@ -12,7 +12,9 @@ services:
         condition: service_started
       open-webui-postgres:
         condition: service_started
-      qdrant:
+      chromadb:
+        condition: service_started
+      tika:
         condition: service_started
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
@@ -26,56 +28,35 @@ services:
       WEBSOCKET_MANAGER: redis
       REDIS_URL: redis://open-webui-redis:6379/0
       WEBSOCKET_REDIS_URL: redis://open-webui-redis:6379/1
-      VECTOR_DB: qdrant
-      QDRANT_URI: http://qdrant:6333
+      VECTOR_DB: chroma
+      CHROMA_HTTP_HOST: chromadb
+      CHROMA_HTTP_PORT: 8000
+      CONTENT_EXTRACTION_ENGINE: tika
+      TIKA_SERVER_URL: http://tika:9998
       WEBUI_SECRET_KEY: ${OPEN_WEBUI_SECRET_KEY:-worklab-alfa-open-webui-secret-key}
+      ENABLE_WEB_SEARCH: "true"
+      WEB_SEARCH_ENGINE: "searxng"
+      SEARXNG_QUERY_URL: "http://searxng:8080/search?q=<query>"
+      RAG_EMBEDDING_ENGINE: "ollama"
+      RAG_EMBEDDING_MODEL: "nomic-embed-text:latest"
+      RAG_OLLAMA_BASE_URL: http://ollama:11434
+      AUDIO_TTS_ENGINE: "openai"
+      AUDIO_TTS_MODEL: "model_q8f16"
+      AUDIO_TTS_VOICE: "af_heart"
+      AUDIO_TTS_OPENAI_API_BASE_URL: "http://kokoro-web:3000/api/v1"
+      AUDIO_TTS_OPENAI_API_KEY: "kokoro-secret-key"
+      ENABLE_IMAGE_GENERATION: "true"
+      IMAGE_GENERATION_ENGINE: "comfyui"
+      # IMAGE_GENERATION_MODEL: "comfyui"
+      IMAGE_EDIT_ENGINE: "comfyui"
+      # IMAGE_EDIT_MODEL: "comfyui"
+      COMFYUI_BASE_URL: http://comfyui:8188
     ports:
       - "30040:8080"
     volumes:
       - open-webui-data:/app/backend/data
     networks:
       - llm-public
-      - llm-internal
-
-  ollama:
-    container_name: worklab-alfa-llm-ollama
-    restart: always
-    image: ollama/ollama:0.18.0
-    ports:
-      - "30041:11434"
-    volumes:
-      - ollama-data:/root/.ollama
-    networks:
-      - llm-public
-      - llm-internal
-
-  ollama-init:
-    container_name: worklab-alfa-llm-ollama-init
-    restart: "no"
-    image: ollama/ollama:0.18.0
-    depends_on:
-      - ollama
-    environment:
-      OLLAMA_HOST: http://ollama:11434
-      OLLAMA_BOOTSTRAP_MODEL: ${OLLAMA_BOOTSTRAP_MODEL:-qwen2.5:1.5b}
-    entrypoint:
-      - /bin/sh
-      - -c
-    command:
-      - |
-        echo "Waiting for Ollama API..."
-        until ollama list >/dev/null 2>&1; do
-          sleep 2
-        done
-        if ollama show "$${OLLAMA_BOOTSTRAP_MODEL}" >/dev/null 2>&1; then
-          echo "Model already exists: $${OLLAMA_BOOTSTRAP_MODEL}"
-          exit 0
-        fi
-        echo "Pulling bootstrap model: $${OLLAMA_BOOTSTRAP_MODEL}"
-        ollama pull "$${OLLAMA_BOOTSTRAP_MODEL}"
-    volumes:
-      - ollama-data:/root/.ollama
-    networks:
       - llm-internal
 
   open-webui-redis:
@@ -100,23 +81,84 @@ services:
     networks:
       - llm-internal
 
-  qdrant:
-    container_name: worklab-alfa-llm-qdrant
+  pipelines:
+      image: ghcr.io/open-webui/pipelines:main
+      volumes:
+        - open-webui-pipelines:/app/pipelines
+      restart: always
+      environment:
+        - PIPELINES_API_KEY=0p3n-w3bu!
+      networks:
+        - llm-internal
+
+  ollama:
+    container_name: worklab-alfa-llm-ollama
     restart: always
-    image: qdrant/qdrant:v1.17.0
+    image: ollama/ollama:0.18.0
+    ports:
+      - "30041:11434"
     volumes:
-      - qdrant-data:/qdrant/storage
+      - ollama-data:/root/.ollama
+    networks:
+      - llm-public
+      - llm-internal
+
+  ollama-init:
+    container_name: worklab-alfa-llm-ollama-init
+    restart: "no"
+    image: ollama/ollama:0.18.0
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_BOOTSTRAP_MODEL: ${OLLAMA_BOOTSTRAP_MODEL:-gemma3:4b}
+    entrypoint:
+      - /bin/sh
+      - -c
+    command:
+      - |
+        echo "Waiting for Ollama API..."
+        until ollama list >/dev/null 2>&1; do
+          sleep 2
+        done
+        if ollama show "$${OLLAMA_BOOTSTRAP_MODEL}" >/dev/null 2>&1; then
+          echo "Model already exists: $${OLLAMA_BOOTSTRAP_MODEL}"
+        else
+          echo "Pulling bootstrap model: $${OLLAMA_BOOTSTRAP_MODEL}"
+          ollama pull "$${OLLAMA_BOOTSTRAP_MODEL}"
+        fi
+        if ollama show "nomic-embed-text:latest" >/dev/null 2>&1; then
+          echo "Embedding model already exists: nomic-embed-text:latest"
+        else
+          echo "Pulling embedding model: nomic-embed-text:latest"
+          ollama pull "nomic-embed-text:latest"
+        fi
+    volumes:
+      - ollama-data:/root/.ollama
     networks:
       - llm-internal
 
-  paddleocr:
-    container_name: worklab-alfa-llm-paddleocr
+  chromadb:
+    container_name: worklab-alfa-llm-chromadb
     restart: always
-    profiles:
-      - webui-media
-    build:
-      context: ./paddleocr
-      dockerfile: Dockerfile
+    image: chromadb/chroma:latest
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ALLOW_RESET: "TRUE"
+      PERSIST_DIRECTORY: /data
+    volumes:
+      - chromadb-data:/data
+    ports:
+      - "30049:8000"
+    networks:
+      - llm-internal
+
+  tika:
+    container_name: worklab-alfa-llm-tika
+    restart: always
+    image: apache/tika:3.2.3.0-full
+    ports:
+      - "30048:9998"
     networks:
       - llm-internal
 
@@ -126,35 +168,31 @@ services:
     image: searxng/searxng:2026.3.13-3c1f68c59
     ports:
       - "30047:8080"
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml
     networks:
       - llm-public
       - llm-internal
 
-  whisper:
-    container_name: worklab-alfa-llm-whisper
-    restart: always
-    profiles:
-      - webui-media
-    image: onerahmet/openai-whisper-asr-webservice:v1.9.1
+  # https://github.com/eduardolat/kokoro-web
+  kokoro-web:
+    image: ghcr.io/eduardolat/kokoro-web:0.1.3
+    ports:
+      - "3000:3000"
     environment:
-      ASR_MODEL: ${WHISPER_MODEL:-base}
-    networks:
-      - llm-internal
-
-  kokoro-tts:
-    container_name: worklab-alfa-llm-kokoro-tts
-    restart: always
+      # Change this to any secret key to use as your OpenAI compatible API key
+      - KW_SECRET_API_KEY=kokoro-secret-key
+    volumes:
+      - ./kokoro-cache:/kokoro/cache
+    restart: unless-stopped
     profiles:
       - webui-media
-    image: ghcr.io/remsky/kokoro-fastapi-cpu:v0.2.4
-    networks:
-      - llm-internal
 
   comfyui:
     container_name: worklab-alfa-llm-comfyui
     restart: always
     profiles:
-      - webui-image
+      - webui-media
     build:
       context: ./comfyui
       dockerfile: Dockerfile
@@ -165,6 +203,24 @@ services:
     networks:
       - llm-public
       - llm-internal
+
+  # CPU-only ComfyUI template (use in non-GPU environments)
+  # To use this service, comment out the comfyui service above to avoid port/container conflicts.
+  # comfyui-cpu:
+  #   container_name: worklab-alfa-llm-comfyui
+  #   restart: always
+  #   profiles:
+  #     - webui-media
+  #   build:
+  #     context: ./comfyui
+  #     dockerfile: Dockerfile.cpu
+  #   ports:
+  #     - "30042:8188"
+  #   volumes:
+  #     - comfyui-data:/app/ComfyUI/output
+  #   networks:
+  #     - llm-public
+  #     - llm-internal
 
   langfuse:
     container_name: worklab-alfa-llm-langfuse
@@ -679,7 +735,8 @@ volumes:
   ollama-data:
   open-webui-redis-data:
   open-webui-postgres-data:
-  qdrant-data:
+  open-webui-pipelines:
+  chromadb-data:
   comfyui-data:
   langfuse-clickhouse-data:
   langfuse-clickhouse-logs:

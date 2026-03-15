@@ -1,51 +1,55 @@
 # LLM stack
 
-初回起動時に全サービスを一度に pull すると、Docker Hub / GHCR / Cloudflare CDN への同時接続が増え、`TLS handshake timeout` が起きやすい構成です。
+このディレクトリは Open WebUI 中心の LLM 開発スタックです。
+現行構成は、Vector DB に ChromaDB、ドキュメント抽出に Apache Tika を採用し、Ollama の埋め込みモデルは `nomic-embed-text:latest` に固定しています。
 
-この compose はデフォルトではコア機能のみ起動します。
+## 構成概要
 
-- デフォルト: `open-webui`, `ollama`, `ollama-init`, `open-webui-redis`, `open-webui-postgres`, `qdrant`, `searxng`
-- `webui-media` profile: `paddleocr`, `whisper`, `kokoro-tts`
-- `webui-image` profile: `comfyui`
+- デフォルト起動: `open-webui`, `open-webui-redis`, `open-webui-postgres`, `pipelines`, `ollama`, `ollama-init`, `chromadb`, `tika`, `searxng`
+- `webui-media` profile: `kokoro-web`, `comfyui`
 - `langfuse` profile: `langfuse` 一式
 - `n8n` profile: `n8n`
 - `dify` profile: `dify` 一式
 
-## 起動例
+## 起動手順
 
-まずは軽量構成で起動します。
+1. コア構成を起動
 
 ```bash
 cd /workspaces/worklab/infra/1-alfa/llm
 docker compose up -d
 ```
 
-追加サービスは profile を指定して段階的に起動します。
+2. メディア機能を追加起動
 
 ```bash
 docker compose --profile webui-media up -d
-docker compose --profile webui-image up -d
+```
+
+3. 必要に応じて拡張サービスを起動
+
+```bash
 docker compose --profile langfuse up -d
 docker compose --profile n8n up -d
 docker compose --profile dify up -d
 ```
 
-初回起動時は `ollama-init` が既定モデルを 1 つ取得します。既定値は `qwen2.5:1.5b` で、`OLLAMA_BOOTSTRAP_MODEL` 環境変数で上書きできます。
+4. 動作確認
 
 ```bash
-OLLAMA_BOOTSTRAP_MODEL=llama3.2:3b docker compose up -d
+docker compose ps
+docker compose logs --tail=100 open-webui
 ```
 
-回線やレジストリアクセスが不安定な環境では、pull の並列数を落とすと再発しにくくなります。
+## 運用メモ
 
-```bash
-cd /workspaces/worklab/infra/1-alfa/llm
-COMPOSE_PARALLEL_LIMIT=1 docker compose pull
-COMPOSE_PARALLEL_LIMIT=1 docker compose up -d
-```
+- `ollama-init` は bootstrap model と埋め込みモデルを確認し、不足時のみ pull します。
+- Vector DB を変更した場合や埋め込み次元を変更した場合は、既存の Knowledge を再インデックスしてください。
+- ComfyUI は GPU 版が既定です。CPU 環境向けテンプレートは compose 内にコメントで保持しています。
 
 ## 公開ポート
 
+- `3000`: Kokoro Web
 - `30040`: Open WebUI
 - `30041`: Ollama API
 - `30042`: ComfyUI
@@ -53,4 +57,6 @@ COMPOSE_PARALLEL_LIMIT=1 docker compose up -d
 - `30044`: n8n
 - `30045`: Dify
 - `30046`: Langfuse MinIO
-- `30047`: SearXNG UI
+- `30047`: SearXNG
+- `30048`: Apache Tika
+- `30049`: ChromaDB
