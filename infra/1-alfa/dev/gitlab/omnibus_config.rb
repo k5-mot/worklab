@@ -66,10 +66,19 @@ nginx['listen_port'] = 80
 # [OPTION] Disable monitoring by Prometheus/Grafana/Alertmanager
 # https://docs.gitlab.com/omnibus/settings/memory_constrained_envs.html#disable-monitoring
 prometheus_monitoring['enable'] = true
-prometheus['enable'] = true
-# prometheus['listen_address'] = '0.0.0.0:9090'
+prometheus['enable'] = false
 # prometheus['monitor_kubernetes'] = false
-# gitlab_exporter['enable'] = true
+
+# External Prometheus server scrapes these exporters directly.
+gitlab_workhorse['prometheus_listen_addr'] = '0.0.0.0:9229'
+
+gitlab_exporter['enable'] = true
+gitlab_exporter['listen_address'] = '0.0.0.0'
+gitlab_exporter['listen_port'] = '9168'
+
+sidekiq['metrics_enabled'] = true
+sidekiq['listen_address'] = '0.0.0.0'
+sidekiq['listen_port'] = 8082
 
 # Enable service discovery for Prometheus
 # consul['enable'] = true
