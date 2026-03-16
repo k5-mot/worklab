@@ -2,20 +2,17 @@ services:
   gitlab:
     container_name: worklab-alfa-dev-gitlab
     restart: always
-    image: gitlab/gitlab-ee:latest
-    hostname: gitlab.local
+    image: gitlab/gitlab-ee:18.7.6-ee.0
     shm_size: 256m
     environment:
-      GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://localhost:30010'
-        letsencrypt['enable'] = false
-        nginx['listen_port'] = 80
+      GITLAB_OMNIBUS_CONFIG: "from_file('/etc/gitlab/omnibus_config.rb')"
     ports:
       - "30010:80"
     volumes:
       - gitlab-config:/etc/gitlab
       - gitlab-logs:/var/log/gitlab
       - gitlab-data:/var/opt/gitlab
+      - ./gitlab/omnibus_config.rb:/etc/gitlab/omnibus_config.rb
     networks:
       - dev-public
       - dev-internal
@@ -23,7 +20,7 @@ services:
   gitlab-runner:
     container_name: worklab-alfa-dev-gitlab-runner
     restart: always
-    image: gitlab/gitlab-runner:latest
+    image: gitlab/gitlab-runner:alpine-v18.9.0
     depends_on:
       - gitlab
     volumes:
@@ -35,7 +32,7 @@ services:
   kroki:
     container_name: worklab-alfa-dev-kroki
     restart: always
-    image: yuzutech/kroki:latest
+    image: yuzutech/kroki:0.30.1
     depends_on:
       - kroki-mermaid
       - kroki-bpmn
@@ -56,32 +53,34 @@ services:
   kroki-mermaid:
     container_name: worklab-alfa-dev-kroki-mermaid
     restart: always
-    image: yuzutech/kroki-mermaid:latest
+    image: yuzutech/kroki-mermaid:0.30.1
     networks:
       - dev-internal
 
   kroki-bpmn:
     container_name: worklab-alfa-dev-kroki-bpmn
     restart: always
-    image: yuzutech/kroki-bpmn:latest
+    image: yuzutech/kroki-bpmn:0.30.1
     networks:
       - dev-internal
 
   kroki-excalidraw:
     container_name: worklab-alfa-dev-kroki-excalidraw
     restart: always
-    image: yuzutech/kroki-excalidraw:latest
+    image: yuzutech/kroki-excalidraw:0.30.1
     networks:
       - dev-internal
 
   kroki-diagramsnet:
     container_name: worklab-alfa-dev-kroki-diagramsnet
     restart: always
-    image: yuzutech/kroki-diagramsnet:latest
+    image: yuzutech/kroki-diagramsnet:0.30.1
     networks:
       - dev-internal
 
   harbor-prepare:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor-prepare
     restart: "no"
     image: goharbor/prepare:v2.12.2
@@ -99,6 +98,8 @@ services:
       - dev-internal
 
   harbor-log:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor-log
     restart: always
     image: goharbor/harbor-log:v2.12.2
@@ -122,6 +123,8 @@ services:
       - dev-internal
 
   harbor-registry:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor-registry
     restart: always
     image: goharbor/registry-photon:v2.12.2
@@ -152,6 +155,8 @@ services:
           - registry
 
   harbor-registryctl:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor-registryctl
     restart: always
     image: goharbor/harbor-registryctl:v2.12.2
@@ -184,6 +189,8 @@ services:
           - registryctl
 
   harbor-postgresql:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor-postgresql
     restart: always
     image: goharbor/harbor-db:v2.12.2
@@ -215,6 +222,8 @@ services:
           - postgresql
 
   harbor-core:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor-core
     restart: always
     image: goharbor/harbor-core:v2.12.2
@@ -255,6 +264,8 @@ services:
           - core
 
   harbor-portal:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor-portal
     restart: always
     image: goharbor/harbor-portal:v2.12.2
@@ -283,6 +294,8 @@ services:
           - portal
 
   harbor-jobservice:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor-jobservice
     restart: always
     image: goharbor/harbor-jobservice:v2.12.2
@@ -314,6 +327,8 @@ services:
           - jobservice
 
   harbor-redis:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor-redis
     restart: always
     image: goharbor/redis-photon:v2.12.2
@@ -341,6 +356,8 @@ services:
           - redis
 
   harbor-trivy-adapter:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor-trivy-adapter
     restart: always
     image: goharbor/trivy-adapter-photon:v2.12.2
@@ -370,6 +387,8 @@ services:
           - trivy-adapter
 
   harbor:
+    profiles:
+      - harbor
     container_name: worklab-alfa-dev-harbor
     restart: always
     image: goharbor/nginx-photon:v2.12.2
@@ -406,6 +425,8 @@ services:
       - dev-internal
 
   sonarqube:
+    profiles:
+      - security
     container_name: worklab-alfa-dev-sonarqube
     restart: always
     image: sonarqube:lts-community
@@ -419,6 +440,8 @@ services:
       - dev-public
 
   dependency-track:
+    profiles:
+      - security
     container_name: worklab-alfa-dev-dependency-track
     restart: always
     image: dependencytrack/bundled:latest

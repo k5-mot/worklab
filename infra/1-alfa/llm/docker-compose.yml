@@ -188,6 +188,24 @@ services:
     profiles:
       - webui-media
 
+#   comfyui:
+#     container_name: worklab-alfa-llm-comfyui
+#     restart: always
+#     profiles:
+#       - webui-media
+#     build:
+#       context: ./comfyui
+#       dockerfile: Dockerfile
+#     ports:
+#       - "30042:8188"
+#     volumes:
+#       - comfyui-data:/app/ComfyUI/output
+#     networks:
+#       - llm-public
+#       - llm-internal
+
+  # CPU-only ComfyUI template (use in non-GPU environments)
+  # To use this service, comment out the comfyui service above to avoid port/container conflicts.
   comfyui:
     container_name: worklab-alfa-llm-comfyui
     restart: always
@@ -195,7 +213,7 @@ services:
       - webui-media
     build:
       context: ./comfyui
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.cpu
     ports:
       - "30042:8188"
     volumes:
@@ -203,24 +221,6 @@ services:
     networks:
       - llm-public
       - llm-internal
-
-  # CPU-only ComfyUI template (use in non-GPU environments)
-  # To use this service, comment out the comfyui service above to avoid port/container conflicts.
-  # comfyui-cpu:
-  #   container_name: worklab-alfa-llm-comfyui
-  #   restart: always
-  #   profiles:
-  #     - webui-media
-  #   build:
-  #     context: ./comfyui
-  #     dockerfile: Dockerfile.cpu
-  #   ports:
-  #     - "30042:8188"
-  #   volumes:
-  #     - comfyui-data:/app/ComfyUI/output
-  #   networks:
-  #     - llm-public
-  #     - llm-internal
 
   langfuse:
     container_name: worklab-alfa-llm-langfuse

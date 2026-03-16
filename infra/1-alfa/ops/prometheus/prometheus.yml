@@ -1,9 +1,11 @@
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
 
 alerting:
   alertmanagers:
-    - static_configs:
+    - scheme: http
+      static_configs:
         - targets:
             - alertmanager:9093
 
@@ -22,3 +24,18 @@ scrape_configs:
     static_configs:
       - targets:
           - cadvisor:8080
+
+  - job_name: gitlab-workhorse
+    static_configs:
+      - targets:
+          - worklab-alfa-dev-gitlab:9229
+
+  - job_name: gitlab-sidekiq
+    static_configs:
+      - targets:
+          - worklab-alfa-dev-gitlab:8082
+
+  - job_name: gitlab_exporter
+    static_configs:
+      - targets:
+          - worklab-alfa-dev-gitlab:9168
