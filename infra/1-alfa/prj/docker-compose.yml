@@ -1,62 +1,3 @@
-x-plane-db-env: &plane-db-env
-  PGHOST: plane-postgresql
-  PGDATABASE: ${PLANE_POSTGRES_DB:-plane}
-  POSTGRES_USER: ${PLANE_POSTGRES_USER:-plane}
-  POSTGRES_PASSWORD: ${PLANE_POSTGRES_PASSWORD:-plane}
-  POSTGRES_DB: ${PLANE_POSTGRES_DB:-plane}
-  POSTGRES_PORT: ${PLANE_POSTGRES_PORT:-5432}
-  PGDATA: ${PLANE_POSTGRES_PGDATA:-/var/lib/postgresql/data}
-
-x-plane-redis-env: &plane-redis-env
-  REDIS_HOST: plane-valkey
-  REDIS_PORT: ${PLANE_VALKEY_PORT:-6379}
-  REDIS_URL: ${PLANE_REDIS_URL:-redis://plane-valkey:6379/}
-
-x-plane-s3-env: &plane-s3-env
-  AWS_REGION: ${PLANE_AWS_REGION:-us-east-1}
-  AWS_ACCESS_KEY_ID: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
-  AWS_SECRET_ACCESS_KEY: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
-  AWS_S3_ENDPOINT_URL: ${PLANE_AWS_S3_ENDPOINT_URL:-http://seaweedfs:30034}
-  AWS_S3_BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
-  MINIO_ROOT_USER: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
-  MINIO_ROOT_PASSWORD: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
-
-x-plane-mq-env: &plane-mq-env
-  RABBITMQ_HOST: plane-rabbitmq
-  RABBITMQ_PORT: ${PLANE_RABBITMQ_PORT:-5672}
-  RABBITMQ_DEFAULT_USER: ${PLANE_RABBITMQ_USER:-plane}
-  RABBITMQ_DEFAULT_PASS: ${PLANE_RABBITMQ_PASSWORD:-plane}
-  RABBITMQ_DEFAULT_VHOST: ${PLANE_RABBITMQ_VHOST:-plane}
-  RABBITMQ_VHOST: ${PLANE_RABBITMQ_VHOST:-plane}
-
-x-plane-live-env: &plane-live-env
-  API_BASE_URL: ${PLANE_API_BASE_URL:-http://plane-api:8000}
-  LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:-change-me}
-
-x-plane-proxy-env: &plane-proxy-env
-  APP_DOMAIN: ${PLANE_APP_DOMAIN:-localhost:30032}
-  FILE_SIZE_LIMIT: ${PLANE_FILE_SIZE_LIMIT:-5242880}
-  CERT_EMAIL: ${PLANE_CERT_EMAIL:-}
-  CERT_ACME_CA: ${PLANE_CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
-  CERT_ACME_DNS: ${PLANE_CERT_ACME_DNS:-}
-  LISTEN_HTTP_PORT: 80
-  LISTEN_HTTPS_PORT: 443
-  BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
-  SITE_ADDRESS: ${PLANE_SITE_ADDRESS:-:80}
-
-x-plane-app-env: &plane-app-env
-  WEB_URL: ${PLANE_WEB_URL:-http://localhost:30032}
-  DEBUG: ${PLANE_DEBUG:-0}
-  CORS_ALLOWED_ORIGINS: ${PLANE_CORS_ALLOWED_ORIGINS:-http://localhost:30032}
-  GUNICORN_WORKERS: ${PLANE_GUNICORN_WORKERS:-1}
-  USE_MINIO: ${PLANE_USE_MINIO:-0}
-  DATABASE_URL: ${PLANE_DATABASE_URL:-postgresql://plane:plane@plane-postgresql/plane}
-  SECRET_KEY: ${PLANE_SECRET_KEY:-change-me}
-  AMQP_URL: ${PLANE_AMQP_URL:-amqp://plane:plane@plane-rabbitmq:5672/plane}
-  API_KEY_RATE_LIMIT: ${PLANE_API_KEY_RATE_LIMIT:-60/minute}
-  MINIO_ENDPOINT_SSL: ${PLANE_MINIO_ENDPOINT_SSL:-0}
-  LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:-change-me}
-
 services:
   backstage:
     container_name: worklab-alfa-prj-backstage
@@ -135,7 +76,15 @@ services:
     restart: always
     image: artifacts.plane.so/makeplane/plane-proxy:${PLANE_APP_RELEASE:-v1.2.3}
     environment:
-      <<: *plane-proxy-env
+      APP_DOMAIN: ${PLANE_APP_DOMAIN:-localhost:30032}
+      FILE_SIZE_LIMIT: ${PLANE_FILE_SIZE_LIMIT:-5242880}
+      CERT_EMAIL: ${PLANE_CERT_EMAIL:-}
+      CERT_ACME_CA: ${PLANE_CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+      CERT_ACME_DNS: ${PLANE_CERT_ACME_DNS:-}
+      LISTEN_HTTP_PORT: 80
+      LISTEN_HTTPS_PORT: 443
+      BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+      SITE_ADDRESS: ${PLANE_SITE_ADDRESS:-:80}
     depends_on:
       - plane-web
       - plane-space
@@ -199,7 +148,11 @@ services:
     restart: always
     image: artifacts.plane.so/makeplane/plane-live:${PLANE_APP_RELEASE:-v1.2.3}
     environment:
-      <<: [*plane-live-env, *plane-redis-env]
+      API_BASE_URL: ${PLANE_API_BASE_URL:-http://plane-api:8000}
+      LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:-change-me}
+      REDIS_HOST: plane-valkey
+      REDIS_PORT: ${PLANE_VALKEY_PORT:-6379}
+      REDIS_URL: ${PLANE_REDIS_URL:-redis://plane-valkey:6379/}
     depends_on:
       - plane-api
       - plane-web
@@ -214,7 +167,43 @@ services:
     image: artifacts.plane.so/makeplane/plane-backend:${PLANE_APP_RELEASE:-v1.2.3}
     command: ./bin/docker-entrypoint-api.sh
     environment:
-      <<: [*plane-app-env, *plane-db-env, *plane-redis-env, *plane-s3-env, *plane-proxy-env]
+      WEB_URL: ${PLANE_WEB_URL:-http://localhost:30032}
+      DEBUG: ${PLANE_DEBUG:-0}
+      CORS_ALLOWED_ORIGINS: ${PLANE_CORS_ALLOWED_ORIGINS:-http://localhost:30032}
+      GUNICORN_WORKERS: ${PLANE_GUNICORN_WORKERS:-1}
+      USE_MINIO: ${PLANE_USE_MINIO:-0}
+      DATABASE_URL: ${PLANE_DATABASE_URL:-postgresql://plane:plane@plane-postgresql/plane}
+      SECRET_KEY: ${PLANE_SECRET_KEY:-change-me}
+      AMQP_URL: ${PLANE_AMQP_URL:-amqp://plane:plane@plane-rabbitmq:5672/plane}
+      API_KEY_RATE_LIMIT: ${PLANE_API_KEY_RATE_LIMIT:-60/minute}
+      MINIO_ENDPOINT_SSL: ${PLANE_MINIO_ENDPOINT_SSL:-0}
+      LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:-change-me}
+      PGHOST: plane-postgresql
+      PGDATABASE: ${PLANE_POSTGRES_DB:-plane}
+      POSTGRES_USER: ${PLANE_POSTGRES_USER:-plane}
+      POSTGRES_PASSWORD: ${PLANE_POSTGRES_PASSWORD:-plane}
+      POSTGRES_DB: ${PLANE_POSTGRES_DB:-plane}
+      POSTGRES_PORT: ${PLANE_POSTGRES_PORT:-5432}
+      PGDATA: ${PLANE_POSTGRES_PGDATA:-/var/lib/postgresql/data}
+      REDIS_HOST: plane-valkey
+      REDIS_PORT: ${PLANE_VALKEY_PORT:-6379}
+      REDIS_URL: ${PLANE_REDIS_URL:-redis://plane-valkey:6379/}
+      AWS_REGION: ${PLANE_AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+      AWS_SECRET_ACCESS_KEY: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+      AWS_S3_ENDPOINT_URL: ${PLANE_AWS_S3_ENDPOINT_URL:-http://seaweedfs:30034}
+      AWS_S3_BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+      MINIO_ROOT_USER: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+      MINIO_ROOT_PASSWORD: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+      APP_DOMAIN: ${PLANE_APP_DOMAIN:-localhost:30032}
+      FILE_SIZE_LIMIT: ${PLANE_FILE_SIZE_LIMIT:-5242880}
+      CERT_EMAIL: ${PLANE_CERT_EMAIL:-}
+      CERT_ACME_CA: ${PLANE_CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+      CERT_ACME_DNS: ${PLANE_CERT_ACME_DNS:-}
+      LISTEN_HTTP_PORT: 80
+      LISTEN_HTTPS_PORT: 443
+      BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+      SITE_ADDRESS: ${PLANE_SITE_ADDRESS:-:80}
     depends_on:
       plane-postgresql:
         condition: service_started
@@ -237,7 +226,43 @@ services:
     image: artifacts.plane.so/makeplane/plane-backend:${PLANE_APP_RELEASE:-v1.2.3}
     command: ./bin/docker-entrypoint-worker.sh
     environment:
-      <<: [*plane-app-env, *plane-db-env, *plane-redis-env, *plane-s3-env, *plane-proxy-env]
+      WEB_URL: ${PLANE_WEB_URL:-http://localhost:30032}
+      DEBUG: ${PLANE_DEBUG:-0}
+      CORS_ALLOWED_ORIGINS: ${PLANE_CORS_ALLOWED_ORIGINS:-http://localhost:30032}
+      GUNICORN_WORKERS: ${PLANE_GUNICORN_WORKERS:-1}
+      USE_MINIO: ${PLANE_USE_MINIO:-0}
+      DATABASE_URL: ${PLANE_DATABASE_URL:-postgresql://plane:plane@plane-postgresql/plane}
+      SECRET_KEY: ${PLANE_SECRET_KEY:-change-me}
+      AMQP_URL: ${PLANE_AMQP_URL:-amqp://plane:plane@plane-rabbitmq:5672/plane}
+      API_KEY_RATE_LIMIT: ${PLANE_API_KEY_RATE_LIMIT:-60/minute}
+      MINIO_ENDPOINT_SSL: ${PLANE_MINIO_ENDPOINT_SSL:-0}
+      LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:-change-me}
+      PGHOST: plane-postgresql
+      PGDATABASE: ${PLANE_POSTGRES_DB:-plane}
+      POSTGRES_USER: ${PLANE_POSTGRES_USER:-plane}
+      POSTGRES_PASSWORD: ${PLANE_POSTGRES_PASSWORD:-plane}
+      POSTGRES_DB: ${PLANE_POSTGRES_DB:-plane}
+      POSTGRES_PORT: ${PLANE_POSTGRES_PORT:-5432}
+      PGDATA: ${PLANE_POSTGRES_PGDATA:-/var/lib/postgresql/data}
+      REDIS_HOST: plane-valkey
+      REDIS_PORT: ${PLANE_VALKEY_PORT:-6379}
+      REDIS_URL: ${PLANE_REDIS_URL:-redis://plane-valkey:6379/}
+      AWS_REGION: ${PLANE_AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+      AWS_SECRET_ACCESS_KEY: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+      AWS_S3_ENDPOINT_URL: ${PLANE_AWS_S3_ENDPOINT_URL:-http://seaweedfs:30034}
+      AWS_S3_BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+      MINIO_ROOT_USER: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+      MINIO_ROOT_PASSWORD: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+      APP_DOMAIN: ${PLANE_APP_DOMAIN:-localhost:30032}
+      FILE_SIZE_LIMIT: ${PLANE_FILE_SIZE_LIMIT:-5242880}
+      CERT_EMAIL: ${PLANE_CERT_EMAIL:-}
+      CERT_ACME_CA: ${PLANE_CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+      CERT_ACME_DNS: ${PLANE_CERT_ACME_DNS:-}
+      LISTEN_HTTP_PORT: 80
+      LISTEN_HTTPS_PORT: 443
+      BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+      SITE_ADDRESS: ${PLANE_SITE_ADDRESS:-:80}
     depends_on:
       plane-api:
         condition: service_started
@@ -260,7 +285,43 @@ services:
     image: artifacts.plane.so/makeplane/plane-backend:${PLANE_APP_RELEASE:-v1.2.3}
     command: ./bin/docker-entrypoint-beat.sh
     environment:
-      <<: [*plane-app-env, *plane-db-env, *plane-redis-env, *plane-s3-env, *plane-proxy-env]
+      WEB_URL: ${PLANE_WEB_URL:-http://localhost:30032}
+      DEBUG: ${PLANE_DEBUG:-0}
+      CORS_ALLOWED_ORIGINS: ${PLANE_CORS_ALLOWED_ORIGINS:-http://localhost:30032}
+      GUNICORN_WORKERS: ${PLANE_GUNICORN_WORKERS:-1}
+      USE_MINIO: ${PLANE_USE_MINIO:-0}
+      DATABASE_URL: ${PLANE_DATABASE_URL:-postgresql://plane:plane@plane-postgresql/plane}
+      SECRET_KEY: ${PLANE_SECRET_KEY:-change-me}
+      AMQP_URL: ${PLANE_AMQP_URL:-amqp://plane:plane@plane-rabbitmq:5672/plane}
+      API_KEY_RATE_LIMIT: ${PLANE_API_KEY_RATE_LIMIT:-60/minute}
+      MINIO_ENDPOINT_SSL: ${PLANE_MINIO_ENDPOINT_SSL:-0}
+      LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:-change-me}
+      PGHOST: plane-postgresql
+      PGDATABASE: ${PLANE_POSTGRES_DB:-plane}
+      POSTGRES_USER: ${PLANE_POSTGRES_USER:-plane}
+      POSTGRES_PASSWORD: ${PLANE_POSTGRES_PASSWORD:-plane}
+      POSTGRES_DB: ${PLANE_POSTGRES_DB:-plane}
+      POSTGRES_PORT: ${PLANE_POSTGRES_PORT:-5432}
+      PGDATA: ${PLANE_POSTGRES_PGDATA:-/var/lib/postgresql/data}
+      REDIS_HOST: plane-valkey
+      REDIS_PORT: ${PLANE_VALKEY_PORT:-6379}
+      REDIS_URL: ${PLANE_REDIS_URL:-redis://plane-valkey:6379/}
+      AWS_REGION: ${PLANE_AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+      AWS_SECRET_ACCESS_KEY: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+      AWS_S3_ENDPOINT_URL: ${PLANE_AWS_S3_ENDPOINT_URL:-http://seaweedfs:30034}
+      AWS_S3_BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+      MINIO_ROOT_USER: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+      MINIO_ROOT_PASSWORD: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+      APP_DOMAIN: ${PLANE_APP_DOMAIN:-localhost:30032}
+      FILE_SIZE_LIMIT: ${PLANE_FILE_SIZE_LIMIT:-5242880}
+      CERT_EMAIL: ${PLANE_CERT_EMAIL:-}
+      CERT_ACME_CA: ${PLANE_CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+      CERT_ACME_DNS: ${PLANE_CERT_ACME_DNS:-}
+      LISTEN_HTTP_PORT: 80
+      LISTEN_HTTPS_PORT: 443
+      BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+      SITE_ADDRESS: ${PLANE_SITE_ADDRESS:-:80}
     depends_on:
       plane-api:
         condition: service_started
@@ -283,7 +344,43 @@ services:
     command: ./bin/docker-entrypoint-migrator.sh
     restart: on-failure
     environment:
-      <<: [*plane-app-env, *plane-db-env, *plane-redis-env, *plane-s3-env, *plane-proxy-env]
+      WEB_URL: ${PLANE_WEB_URL:-http://localhost:30032}
+      DEBUG: ${PLANE_DEBUG:-0}
+      CORS_ALLOWED_ORIGINS: ${PLANE_CORS_ALLOWED_ORIGINS:-http://localhost:30032}
+      GUNICORN_WORKERS: ${PLANE_GUNICORN_WORKERS:-1}
+      USE_MINIO: ${PLANE_USE_MINIO:-0}
+      DATABASE_URL: ${PLANE_DATABASE_URL:-postgresql://plane:plane@plane-postgresql/plane}
+      SECRET_KEY: ${PLANE_SECRET_KEY:-change-me}
+      AMQP_URL: ${PLANE_AMQP_URL:-amqp://plane:plane@plane-rabbitmq:5672/plane}
+      API_KEY_RATE_LIMIT: ${PLANE_API_KEY_RATE_LIMIT:-60/minute}
+      MINIO_ENDPOINT_SSL: ${PLANE_MINIO_ENDPOINT_SSL:-0}
+      LIVE_SERVER_SECRET_KEY: ${PLANE_LIVE_SERVER_SECRET_KEY:-change-me}
+      PGHOST: plane-postgresql
+      PGDATABASE: ${PLANE_POSTGRES_DB:-plane}
+      POSTGRES_USER: ${PLANE_POSTGRES_USER:-plane}
+      POSTGRES_PASSWORD: ${PLANE_POSTGRES_PASSWORD:-plane}
+      POSTGRES_DB: ${PLANE_POSTGRES_DB:-plane}
+      POSTGRES_PORT: ${PLANE_POSTGRES_PORT:-5432}
+      PGDATA: ${PLANE_POSTGRES_PGDATA:-/var/lib/postgresql/data}
+      REDIS_HOST: plane-valkey
+      REDIS_PORT: ${PLANE_VALKEY_PORT:-6379}
+      REDIS_URL: ${PLANE_REDIS_URL:-redis://plane-valkey:6379/}
+      AWS_REGION: ${PLANE_AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+      AWS_SECRET_ACCESS_KEY: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+      AWS_S3_ENDPOINT_URL: ${PLANE_AWS_S3_ENDPOINT_URL:-http://seaweedfs:30034}
+      AWS_S3_BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+      MINIO_ROOT_USER: ${SEAWEEDFS_ACCESS_KEY:-seaweedfs}
+      MINIO_ROOT_PASSWORD: ${SEAWEEDFS_SECRET_KEY:-seaweedfs-secret}
+      APP_DOMAIN: ${PLANE_APP_DOMAIN:-localhost:30032}
+      FILE_SIZE_LIMIT: ${PLANE_FILE_SIZE_LIMIT:-5242880}
+      CERT_EMAIL: ${PLANE_CERT_EMAIL:-}
+      CERT_ACME_CA: ${PLANE_CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+      CERT_ACME_DNS: ${PLANE_CERT_ACME_DNS:-}
+      LISTEN_HTTP_PORT: 80
+      LISTEN_HTTPS_PORT: 443
+      BUCKET_NAME: ${PLANE_S3_BUCKET_NAME:-uploads}
+      SITE_ADDRESS: ${PLANE_SITE_ADDRESS:-:80}
     depends_on:
       plane-postgresql:
         condition: service_started
@@ -302,7 +399,13 @@ services:
     image: postgres:15.7-alpine
     command: postgres -c max_connections=1000
     environment:
-      <<: *plane-db-env
+      PGHOST: plane-postgresql
+      PGDATABASE: ${PLANE_POSTGRES_DB:-plane}
+      POSTGRES_USER: ${PLANE_POSTGRES_USER:-plane}
+      POSTGRES_PASSWORD: ${PLANE_POSTGRES_PASSWORD:-plane}
+      POSTGRES_DB: ${PLANE_POSTGRES_DB:-plane}
+      POSTGRES_PORT: ${PLANE_POSTGRES_PORT:-5432}
+      PGDATA: ${PLANE_POSTGRES_PGDATA:-/var/lib/postgresql/data}
     volumes:
       - plane-postgresql-data:/var/lib/postgresql/data
     networks:
@@ -322,7 +425,12 @@ services:
     restart: always
     image: rabbitmq:3.13.6-management-alpine
     environment:
-      <<: *plane-mq-env
+      RABBITMQ_HOST: plane-rabbitmq
+      RABBITMQ_PORT: ${PLANE_RABBITMQ_PORT:-5672}
+      RABBITMQ_DEFAULT_USER: ${PLANE_RABBITMQ_USER:-plane}
+      RABBITMQ_DEFAULT_PASS: ${PLANE_RABBITMQ_PASSWORD:-plane}
+      RABBITMQ_DEFAULT_VHOST: ${PLANE_RABBITMQ_VHOST:-plane}
+      RABBITMQ_VHOST: ${PLANE_RABBITMQ_VHOST:-plane}
     volumes:
       - plane-rabbitmq-data:/var/lib/rabbitmq
     networks:
