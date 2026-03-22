@@ -45,7 +45,8 @@ docker compose logs --tail=100 open-webui
 
 - `ollama-init` は bootstrap model と埋め込みモデルを確認し、不足時のみ pull します。
 - Vector DB を変更した場合や埋め込み次元を変更した場合は、既存の Knowledge を再インデックスしてください。
-- ComfyUI は GPU 版が既定です。CPU 環境向けテンプレートは compose 内にコメントで保持しています。
+- ComfyUI は `webui-media` profile の明示指定時のみ起動します。
+- 現在のCompose定義では CPU 向け Dockerfile を既定で利用します（GPU利用時は compose の `dockerfile` を切り替えてください）。
 
 ## 公開ポート
 

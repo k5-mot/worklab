@@ -22,6 +22,35 @@
 - サービス名の下位 bullet は、self-host 構成で追加になりやすい companion / dependency container を表す
 - `or` を含む項目は、同等の役割を持つ代替実装を表す
 
+## 起動方針（リソース制約対応）
+
+`1-alfa/docker-compose.yml` は、検証時の計算資源を抑えるため、常に `base` と追加1スタックのみを起動する構成です。
+
+- 既定: `base + prj`
+- 変更方法: `ALFA_STACK_COMPOSE` に `dev/ops/prj/llm` のいずれかを指定
+
+```bash
+cd /workspaces/worklab/infra/1-alfa
+
+# 既定 (base + prj)
+docker compose up -d
+
+# base + dev
+ALFA_STACK_COMPOSE=./dev/docker-compose.yml docker compose up -d
+
+# base + ops
+ALFA_STACK_COMPOSE=./ops/docker-compose.yml docker compose up -d
+
+# base + llm
+ALFA_STACK_COMPOSE=./llm/docker-compose.yml docker compose up -d
+```
+
+停止時は同じ `ALFA_STACK_COMPOSE` 値で `docker compose down` を実行してください。
+
+## 初回セットアップガイド
+
+- base + dev + ops の初回セットアップ手順: `SETUP-base-dev-ops.md`
+
 ## base
 
 - Keycloak: `30000`

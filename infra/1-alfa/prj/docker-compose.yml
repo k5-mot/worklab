@@ -439,6 +439,8 @@ services:
   ghost:
     container_name: worklab-alfa-prj-ghost
     restart: always
+    profiles:
+      - prj-extra
     image: ghost:5-alpine
     environment:
       url: http://localhost:30033

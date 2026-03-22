@@ -1,7 +1,7 @@
 services:
   gitlab:
     container_name: worklab-alfa-dev-gitlab
-    restart: always
+    restart: unless-stopped
     image: gitlab/gitlab-ee:18.7.6-ee.0
     shm_size: 256m
     environment:
@@ -19,7 +19,7 @@ services:
 
   gitlab-runner:
     container_name: worklab-alfa-dev-gitlab-runner
-    restart: always
+    restart: unless-stopped
     image: gitlab/gitlab-runner:alpine-v18.9.0
     depends_on:
       - gitlab
@@ -31,7 +31,7 @@ services:
 
   kroki:
     container_name: worklab-alfa-dev-kroki
-    restart: always
+    restart: unless-stopped
     image: yuzutech/kroki:0.30.1
     depends_on:
       - kroki-mermaid
@@ -52,28 +52,28 @@ services:
 
   kroki-mermaid:
     container_name: worklab-alfa-dev-kroki-mermaid
-    restart: always
+    restart: unless-stopped
     image: yuzutech/kroki-mermaid:0.30.1
     networks:
       - dev-internal
 
   kroki-bpmn:
     container_name: worklab-alfa-dev-kroki-bpmn
-    restart: always
+    restart: unless-stopped
     image: yuzutech/kroki-bpmn:0.30.1
     networks:
       - dev-internal
 
   kroki-excalidraw:
     container_name: worklab-alfa-dev-kroki-excalidraw
-    restart: always
+    restart: unless-stopped
     image: yuzutech/kroki-excalidraw:0.30.1
     networks:
       - dev-internal
 
   kroki-diagramsnet:
     container_name: worklab-alfa-dev-kroki-diagramsnet
-    restart: always
+    restart: unless-stopped
     image: yuzutech/kroki-diagramsnet:0.30.1
     networks:
       - dev-internal
@@ -101,7 +101,7 @@ services:
     profiles:
       - harbor
     container_name: worklab-alfa-dev-harbor-log
-    restart: always
+    restart: unless-stopped
     image: goharbor/harbor-log:v2.12.2
     cap_drop:
       - ALL
@@ -126,7 +126,7 @@ services:
     profiles:
       - harbor
     container_name: worklab-alfa-dev-harbor-registry
-    restart: always
+    restart: unless-stopped
     image: goharbor/registry-photon:v2.12.2
     cap_drop:
       - ALL
@@ -158,7 +158,7 @@ services:
     profiles:
       - harbor
     container_name: worklab-alfa-dev-harbor-registryctl
-    restart: always
+    restart: unless-stopped
     image: goharbor/harbor-registryctl:v2.12.2
     env_file:
       - ./harbor/common/config/registryctl/env
@@ -192,7 +192,7 @@ services:
     profiles:
       - harbor
     container_name: worklab-alfa-dev-harbor-postgresql
-    restart: always
+    restart: unless-stopped
     image: goharbor/harbor-db:v2.12.2
     env_file:
       - ./harbor/common/config/db/env
@@ -225,7 +225,7 @@ services:
     profiles:
       - harbor
     container_name: worklab-alfa-dev-harbor-core
-    restart: always
+    restart: unless-stopped
     image: goharbor/harbor-core:v2.12.2
     env_file:
       - ./harbor/common/config/core/env
@@ -267,7 +267,7 @@ services:
     profiles:
       - harbor
     container_name: worklab-alfa-dev-harbor-portal
-    restart: always
+    restart: unless-stopped
     image: goharbor/harbor-portal:v2.12.2
     cap_drop:
       - ALL
@@ -297,7 +297,7 @@ services:
     profiles:
       - harbor
     container_name: worklab-alfa-dev-harbor-jobservice
-    restart: always
+    restart: unless-stopped
     image: goharbor/harbor-jobservice:v2.12.2
     env_file:
       - ./harbor/common/config/jobservice/env
@@ -330,7 +330,7 @@ services:
     profiles:
       - harbor
     container_name: worklab-alfa-dev-harbor-redis
-    restart: always
+    restart: unless-stopped
     image: goharbor/redis-photon:v2.12.2
     cap_drop:
       - ALL
@@ -359,7 +359,7 @@ services:
     profiles:
       - harbor
     container_name: worklab-alfa-dev-harbor-trivy-adapter
-    restart: always
+    restart: unless-stopped
     image: goharbor/trivy-adapter-photon:v2.12.2
     env_file:
       - ./harbor/common/config/trivy-adapter/env
@@ -390,7 +390,7 @@ services:
     profiles:
       - harbor
     container_name: worklab-alfa-dev-harbor
-    restart: always
+    restart: unless-stopped
     image: goharbor/nginx-photon:v2.12.2
     cap_drop:
       - ALL
@@ -428,7 +428,7 @@ services:
     profiles:
       - security
     container_name: worklab-alfa-dev-sonarqube
-    restart: always
+    restart: unless-stopped
     image: sonarqube:lts-community
     ports:
       - "30012:9000"
@@ -443,7 +443,7 @@ services:
     profiles:
       - security
     container_name: worklab-alfa-dev-dependency-track
-    restart: always
+    restart: unless-stopped
     image: dependencytrack/bundled:latest
     ports:
       - "30013:8080"

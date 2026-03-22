@@ -2,7 +2,4 @@ name: alfa
 
 include:
   - ./base/docker-compose.yml
-  - ./dev/docker-compose.yml
-  - ./ops/docker-compose.yml
-  - ./prj/docker-compose.yml
-  - ./llm/docker-compose.yml
+  - ${ALFA_STACK_COMPOSE:-./prj/docker-compose.yml}

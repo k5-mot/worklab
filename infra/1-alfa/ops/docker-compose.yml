@@ -1,7 +1,7 @@
 services:
   uptime-kuma:
     container_name: worklab-alfa-ops-uptime-kuma
-    restart: always
+    restart: unless-stopped
     image: louislam/uptime-kuma:1
     ports:
       - "30020:3001"
@@ -12,7 +12,7 @@ services:
 
   portainer:
     container_name: worklab-alfa-ops-portainer
-    restart: always
+    restart: unless-stopped
     image: portainer/portainer-ce:latest
     command: -H unix:///var/run/docker.sock
     ports:
@@ -25,12 +25,11 @@ services:
 
   grafana:
     container_name: worklab-alfa-ops-grafana
-    restart: always
+    restart: unless-stopped
     image: grafana/grafana-oss:latest
     depends_on:
       - prometheus
       - loki
-      - tempo
     ports:
       - "30022:3000"
     volumes:
@@ -44,7 +43,7 @@ services:
 
   prometheus:
     container_name: worklab-alfa-ops-prometheus
-    restart: always
+    restart: unless-stopped
     image: prom/prometheus:latest
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -64,7 +63,7 @@ services:
 
   node-exporter:
     container_name: worklab-alfa-ops-node-exporter
-    restart: always
+    restart: unless-stopped
     image: prom/node-exporter:latest
     command:
       - --path.rootfs=/host
@@ -75,7 +74,7 @@ services:
 
   cadvisor:
     container_name: worklab-alfa-ops-cadvisor
-    restart: always
+    restart: unless-stopped
     image: gcr.io/cadvisor/cadvisor:latest
     privileged: true
     volumes:
@@ -88,7 +87,7 @@ services:
 
   alertmanager:
     container_name: worklab-alfa-ops-alertmanager
-    restart: always
+    restart: unless-stopped
     image: prom/alertmanager:latest
     command:
       - --config.file=/etc/alertmanager/alertmanager.yml
@@ -101,7 +100,7 @@ services:
 
   loki:
     container_name: worklab-alfa-ops-loki
-    restart: always
+    restart: unless-stopped
     image: grafana/loki:latest
     command: -config.file=/etc/loki/local-config.yml
     volumes:
@@ -112,7 +111,9 @@ services:
 
   tempo:
     container_name: worklab-alfa-ops-tempo
-    restart: always
+    restart: unless-stopped
+    profiles:
+      - ops-tracing
     image: grafana/tempo:latest
     user: "0"
     command: -config.file=/etc/tempo/tempo.yml

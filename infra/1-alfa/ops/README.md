@@ -1,8 +1,20 @@
 # ops
 
+## 起動プロファイル
+
+- デフォルト起動: `uptime-kuma`, `portainer`, `grafana`, `prometheus`, `node-exporter`, `cadvisor`, `alertmanager`, `loki`
+- `ops-tracing` profile: `tempo`
+
+`tempo` を使う場合のみ、以下で追加起動します。
+
+```bash
+cd /workspaces/worklab/infra/1-alfa
+ALFA_STACK_COMPOSE=./ops/docker-compose.yml docker compose --profile ops-tracing up -d
+```
+
 ## GitLab - Grafanaセットアップ手順
 
-このリポジトリでは Grafana の data source と GitLab ダッシュボードは provisioning 済みです。  
+このリポジトリでは Grafana の data source と GitLab ダッシュボードは provisioning 済みです。
 GitLab メトリクスを Grafana で見えるようにするには、`dev` 側 GitLab の exporter を `ops` 側 Prometheus から scrape できるようにします。
 
 ### 事前に入っているもの
@@ -107,7 +119,7 @@ sidekiq['listen_port'] = 8082
 
 ### 4. Prometheus に GitLab scrape target を追加する
 
-提示されたサンプルの形に寄せると、`infra/1-alfa/ops/prometheus/prometheus.yml` は次のイメージになります。  
+提示されたサンプルの形に寄せると、`infra/1-alfa/ops/prometheus/prometheus.yml` は次のイメージになります。
 このリポジトリには `nginx-exporter` は無いため、その target は入れていません。
 
 ```yaml
@@ -181,23 +193,23 @@ docker exec worklab-alfa-dev-gitlab ss -lnt | grep -E '9168|9229|8082'
 
 ### トラブルシュート
 
-- `worklab-alfa-dev-gitlab` を名前解決できない  
+- `worklab-alfa-dev-gitlab` を名前解決できない
   `worklab-alfa-monitoring` に GitLab と Prometheus の両方が参加しているか確認します。
 
-- Prometheus target が `DOWN` のまま  
+- Prometheus target が `DOWN` のまま
   `gitlab-ctl reconfigure` 後に exporter が listen しているか、`ss -lnt` で確認します。
 
-- Grafana に dashboard が出ない  
+- Grafana に dashboard が出ない
   `infra/1-alfa/ops/grafana/default.yaml` と `infra/1-alfa/ops/grafana/dashboards/gitlab.json` が mount されているか確認し、必要なら Grafana を再作成します。
 
-- GitLab 側の monitoring を全部止めてしまった  
+- GitLab 側の monitoring を全部止めてしまった
   `prometheus_monitoring['enable'] = false` にすると exporter まで止まるため、external Prometheus 構成では設定しません。
 
 ### 参考
 
-- GitLab Docs: Monitoring GitLab with Prometheus  
+- GitLab Docs: Monitoring GitLab with Prometheus
   https://docs.gitlab.com/administration/monitoring/prometheus/
-- GitLab Docs: Web exporter  
+- GitLab Docs: Web exporter
   https://docs.gitlab.com/administration/monitoring/prometheus/web_exporter/
-- GitLab Docs: Sidekiq metrics server  
+- GitLab Docs: Sidekiq metrics server
   https://docs.gitlab.com/administration/sidekiq/
